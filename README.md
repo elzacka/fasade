@@ -39,6 +39,7 @@ lokalt på Mac eller PC.
 | Tekst | `tekstOppsett`, `#tekstinn`, `uthev` | Ett oppsett for tegning, klikk, markør og markering. Skrivingen går gjennom et skjult felt |
 | 3D | `lagKontur`, WebGL | Silhuetten leses ut av sølvrammen. Sideveggen lyses per piksel |
 | Rammefarger | `RAMMEDATA`, `VARIANTER` | Tre ekte rammer. De seks andre farges fra sølv med duotone |
+| Statuslinje | `analyserStatuslinje`, `skjermbildeMedStatuslinje` | Statuslinjen er de første radene som skiller seg fra fargen øverst. «Skjul» fyller dem med den fargen. «Bytt ut» løfter tegnene av bakgrunnen i et annet skjermbilde med samme størrelse (farge til alfa) og legger dem på bakgrunnen i dette |
 | Eksport | `eksporterEn`, `EKSPORTGRUNN` | Ugjennomsiktig canvas, så PNG-ene får ingen alfakanal |
 | Sjekk | `publiseringssjekk()` | Gir funnene «Sjekk serien» viser |
 | Konsoll | `window.app` | Tilgang til tilstanden. `app.leggTilFraUrl(url)` legger til et bilde |

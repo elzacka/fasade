@@ -88,6 +88,28 @@ riktig størrelse og sømløse overganger.
 - «+ Grafikk» legger inn en logo eller et symbol. «Ensfarget» farger det i én
   farge.
 
+### Statuslinje
+
+- Under «Statuslinje» i panelet velger du «Behold», «Skjul» eller «Bytt ut».
+- «Skjul» dekker statuslinjen med bakgrunnsfargen i skjermbildet.
+- «Bytt ut» henter statuslinjen fra et annet skjermbilde du velger. Det må være
+  tatt på samme iPhone-modell som skjermbildet i telefonen.
+- Fasade kan bare skjule eller bytte ut statuslinjen når bakgrunnen bak den er
+  ensfarget. Ellers viser Fasade skjermbildet uendret, og «Sjekk serien» sier fra.
+
+> [!TIP]
+> Vil du ha klokken 9.41, full dekning og fullt batteri? Start appen i Simulator
+> på samme iPhone-modell som skjermbildene dine, og kjør dette i Terminal:
+>
+> ```sh
+> xcrun simctl status_bar booted override --time 9:41 --dataNetwork wifi --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 --operatorName '' --batteryState discharging --batteryLevel 100
+> xcrun simctl io booted screenshot statuslinje.png
+> ```
+>
+> Har du flere simulatorer i gang, skriver du navnet på simulatoren i stedet for
+> `booted`. Simulator kan ikke vise flymodus, batteriprosenten eller pilen for
+> Stedstjenester. Ta skjermbildet på iPhone når du trenger dem.
+
 > [!TIP]
 > Bruk små vinkler i «Tilt i 3D». Store vinkler gjør skjermbildet vanskelig å lese.
 
@@ -112,6 +134,7 @@ Sjekken finner:
 - Gjennomsiktig bakgrunn
 - Overganger som ikke går opp
 - En overskrift som blir for liten i søkeresultatet
+- Statuslinjer Fasade ikke kan skjule eller bytte ut
 
 En telefon som går ut over kanten, regnes som et bevisst utsnitt.
 

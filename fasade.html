@@ -701,7 +701,7 @@ const HJORNE = 0.045;      // the rounding of the screenshots in the store
 const EKSPORTGRUNN = '#ffffff';
 
 // Semantic version (MAJOR.MINOR.PATCH); the README says when each part goes up
-const VERSJON = '1.0.0';
+const VERSJON = '1.1.0';
 
 // Shortcut labels: ⌘ and ⇧ on a Mac, Ctrl+ and Skift+ elsewhere
 const ER_MAC = !!navigator.platform && /Mac/i.test(navigator.platform);
@@ -763,6 +763,8 @@ function nyttTelefonlag(over) {
     skala: 0.56, opasitet: 100,
     variant: 'silver',
     skjermbildeId: null,
+    statuslinje: 'behold',            // 'behold', 'skjul' or 'bytt'
+    statuslinjeKilde: null,           // the screenshot 'bytt' takes the status bar from
     tiltY: 0, tiltX: 0, tiltZ: 0, persp: 3400,
     skygge: 45,
     zoom: 100, panX: 0, panY: 0        // crop of the screenshot inside the screen
@@ -870,8 +872,8 @@ function nyMal(format) {
     bakgrunn: nyBakgrunn(),
     roller: [
       nyRolle(nyttTelefonlag({ x: midtX, y: 760 + hoyde / 2, skala: skala })),
-      nyRolle(nyttTekstlag({ navn: 'Overskrift', x: midtX, y: 360 })),
-      nyRolle(nyttTekstlag({ navn: 'Undertekst', str: 56, vekt: 500, y: 620, x: midtX }))
+      nyRolle(nyttTekstlag({ navn: 'Undertekst', str: 56, vekt: 500, y: 620, x: midtX })),
+      nyRolle(nyttTekstlag({ navn: 'Overskrift', x: midtX, y: 360 }))
     ]
   };
 }
@@ -988,6 +990,7 @@ function normaliserProsjekt(p) {
       if (l.gruppe === undefined) l.gruppe = null;
       if (l.rolleId === undefined) l.rolleId = null;
       if (!l.avvik) l.avvik = {};
+      if (l.type === 'telefon' && !l.statuslinje) { l.statuslinje = 'behold'; l.statuslinjeKilde = null; }
       if (l.type !== 'tekst') return;
       const nt = nyttTekstlag();
       ['platePadX', 'platePadY', 'plateRadius', 'plateOpasitet', 'tekstOpasitet'].forEach(f => {
@@ -998,6 +1001,9 @@ function normaliserProsjekt(p) {
     });
   });
   if (!p.mal && p.slides && p.slides.length) p.mal = byggMalFraProsjekt(p);
+  if (p.mal) p.mal.roller.forEach(r => {
+    if (r.type === 'telefon' && !r.felt.statuslinje) { r.felt.statuslinje = 'behold'; r.felt.statuslinjeKilde = null; }
+  });
   return p;
 }
 
@@ -1200,6 +1206,7 @@ function brukteBildeIder() {
     if (s.bakgrunn.bildeId) ider.add(s.bakgrunn.bildeId);
     s.lag.forEach(l => {
       if (l.skjermbildeId) ider.add(l.skjermbildeId);
+      if (l.statuslinjeKilde) ider.add(l.statuslinjeKilde);
       if (l.bildeId) ider.add(l.bildeId);
     });
   });
@@ -1714,11 +1721,123 @@ const GLR = {
   }
 };
 
+/* =============================== Status bar ===============================
+
+   iOS draws the status bar straight onto the app's background. Where that
+   background is one flat colour, Fasade can remove the status bar without a
+   trace, or replace it with the status bar from another screenshot of the
+   same size. Every colour comes from the screenshots' own pixels. */
+
+const STATUSLINJE_MAKS = 62;       // points; the status bar never reaches below this
+const STATUSLINJE_LUFT = 2;        // points of flat background required below the glyphs
+const STATUSLINJE_TOLERANSE = 6;   // per channel; absorbs compression noise
+
+// Finds the status bar: the first rows that differ from the colour at the very
+// top, followed by flat background. Cached per image.
+const statuslinjeAnalyser = new WeakMap();
+function analyserStatuslinje(img) {
+  if (statuslinjeAnalyser.has(img)) return statuslinjeAnalyser.get(img);
+  const W = img.width;
+  const skala = W >= 1000 ? 3 : 2;               // @3x on current iPhones, @2x on older ones
+  const maks = Math.min(img.height, STATUSLINJE_MAKS * skala);
+  const luft = STATUSLINJE_LUFT * skala;
+  const kant = Math.round(W * 0.04);             // skips the rounded corners in simulator screenshots
+  const c = document.createElement('canvas');
+  c.width = W; c.height = maks;
+  const x = c.getContext('2d', { willReadFrequently: true });
+  x.drawImage(img, 0, 0);
+  const d = x.getImageData(0, 0, W, maks).data;
+  const bg = [d[kant * 4], d[kant * 4 + 1], d[kant * 4 + 2]];
+  const T = STATUSLINJE_TOLERANSE;
+  const radHarTegn = y => {
+    for (let px = kant; px < W - kant; px++) {
+      const i = (y * W + px) * 4;
+      if (Math.abs(d[i] - bg[0]) > T || Math.abs(d[i + 1] - bg[1]) > T || Math.abs(d[i + 2] - bg[2]) > T) return true;
+    }
+    return false;
+  };
+  let forste = -1, siste = -1, y = 0;
+  for (; y < maks; y++) {
+    if (radHarTegn(y)) { if (forste < 0) forste = y; siste = y; }
+    else if (forste >= 0 && y - siste > luft) break;
+  }
+  const svar = forste === 0 || (forste > 0 && y >= maks)
+    ? { ok: false }
+    : { ok: true, bg: bg, bunn: forste < 0 ? 0 : y, kant: kant };
+  statuslinjeAnalyser.set(img, svar);
+  return svar;
+}
+
+// What the phone layer's status bar setting can do with its screenshots.
+// `feil` is the reason shown in the panel and in «Sjekk serien».
+function statuslinjeStatus(lag) {
+  const modus = lag.statuslinje || 'behold';
+  const skjerm = lag.skjermbildeId && bilder.get(lag.skjermbildeId);
+  if (modus === 'behold' || !skjerm || !skjerm.img) return { modus: 'behold' };
+  const her = analyserStatuslinje(skjerm.img);
+  if (!her.ok) return { modus: 'behold', feil: 'Bakgrunnen bak statuslinjen er ikke ensfarget, så Fasade viser skjermbildet uendret.' };
+  if (modus === 'skjul') return { modus: 'skjul', her: her };
+  const kilde = lag.statuslinjeKilde && bilder.get(lag.statuslinjeKilde);
+  if (!kilde || !kilde.img) return { modus: 'behold', feil: 'Velg skjermbildet du vil hente statuslinjen fra.' };
+  const k = kilde.img, s = skjerm.img;
+  if (k.width !== s.width || k.height !== s.height) {
+    return { modus: 'behold', feil: 'Skjermbildet med statuslinjen er ' + k.width + ' × ' + k.height + ' px, men skjermbildet i telefonen er ' +
+      s.width + ' × ' + s.height + ' px. Bruk et skjermbilde fra samme iPhone-modell.' };
+  }
+  const fra = analyserStatuslinje(k);
+  if (!fra.ok) return { modus: 'behold', feil: 'Bakgrunnen bak statuslinjen i skjermbildet du henter fra, er ikke ensfarget. Fasade viser skjermbildet uendret.' };
+  return { modus: 'bytt', her: her, fra: fra, kilde: k };
+}
+
+const statuslinjeCache = new Map();   // key -> canvas
+// The screenshot as the phone shows it, with the status bar setting applied
+function skjermbildeMedStatuslinje(lag, img) {
+  const st = statuslinjeStatus(lag);
+  if (st.modus === 'behold') return img;
+  const key = [lag.skjermbildeId, st.modus, st.modus === 'bytt' ? lag.statuslinjeKilde : ''].join('|');
+  if (statuslinjeCache.has(key)) return statuslinjeCache.get(key);
+  const W = img.width;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = img.height;
+  const x = c.getContext('2d', { willReadFrequently: true });
+  x.drawImage(img, 0, 0);
+  const n = st.her.bg;
+  const bunn = st.modus === 'bytt' ? Math.max(st.her.bunn, st.fra.bunn) : st.her.bunn;
+  x.fillStyle = 'rgb(' + n.join(',') + ')';
+  x.fillRect(0, 0, W, bunn);
+  if (st.modus === 'bytt' && bunn > 0) {
+    // Lifts the glyphs off the other screenshot's background (colour to alpha) and lays
+    // them on this one's. With the same background the pixels are copied unchanged.
+    const k = document.createElement('canvas');
+    k.width = W; k.height = bunn;
+    const kx = k.getContext('2d', { willReadFrequently: true });
+    kx.drawImage(st.kilde, 0, 0);
+    const inn = kx.getImageData(0, 0, W, bunn).data;
+    const ut = x.getImageData(0, 0, W, bunn);
+    const b = st.fra.bg;
+    for (let y = 0; y < bunn; y++) {
+      for (let px = st.fra.kant; px < W - st.fra.kant; px++) {
+        const i = (y * W + px) * 4;
+        let a = 0;
+        for (let ch = 0; ch < 3; ch++) {
+          const p = inn[i + ch], q = b[ch];
+          a = Math.max(a, p > q ? (p - q) / (255 - q) : p < q ? (q - p) / q : 0);
+        }
+        for (let ch = 0; ch < 3; ch++) ut.data[i + ch] = Math.round(inn[i + ch] + (n[ch] - b[ch]) * (1 - a));
+      }
+    }
+    x.putImageData(ut, 0, 0);
+  }
+  if (statuslinjeCache.size > 12) statuslinjeCache.delete(statuslinjeCache.keys().next().value);
+  statuslinjeCache.set(key, c);
+  return c;
+}
+
 /* =============================== Phone texture and cache =============================== */
 
 const teksturCache = new Map();   // key -> canvas (frame + screenshot composited)
 function teksturFor(lag) {
-  const key = [lag.variant, lag.skjermbildeId || 'tom', lag.zoom, lag.panX, lag.panY].join('|');
+  const key = [lag.variant, lag.skjermbildeId || 'tom', lag.statuslinje, lag.statuslinjeKilde, lag.zoom, lag.panX, lag.panY].join('|');
   if (teksturCache.has(key)) return { c: teksturCache.get(key), key: key };
   const TS = TEKSTUR_SKALA;
   const c = document.createElement('canvas');
@@ -1734,7 +1853,7 @@ function teksturFor(lag) {
   x.fillRect(SX, SY, SW, SH);
   const skjerm = lag.skjermbildeId ? bilder.get(lag.skjermbildeId) : null;
   if (skjerm && skjerm.img) {
-    const img = skjerm.img;
+    const img = skjermbildeMedStatuslinje(lag, skjerm.img);
     const grunn = Math.max(SW / img.width, SH / img.height);
     const s = grunn * (lag.zoom / 100);
     const w = img.width * s, h = img.height * s;
@@ -1758,7 +1877,7 @@ function teksturFor(lag) {
 
 const telefonCache = new Map();   // key -> {c,x0,y0,w,h}
 function telefonSnapshot(lag, pw, ph, kvalitet) {
-  const key = [lag.variant, lag.skjermbildeId || 'tom', lag.zoom, lag.panX, lag.panY,
+  const key = [lag.variant, lag.skjermbildeId || 'tom', lag.statuslinje, lag.statuslinjeKilde, lag.zoom, lag.panX, lag.panY,
     lag.tiltX, lag.tiltY, lag.tiltZ, lag.persp, Math.round(pw), Math.round(ph), kvalitet].join('|');
   if (telefonCache.has(key)) return telefonCache.get(key);
   const tex = teksturFor(lag);
@@ -4143,6 +4262,8 @@ function publiseringssjekk() {
               tekst: navn + ': Skjermbildet er ' + bilde.img.width + ' px bredt, men vises ' + skjermbredde +
                      ' px bredt. Det blir uskarpt. Ta skjermbildet på en telefon med større skjerm, eller gjør telefonen mindre.' });
           }
+          const st = statuslinjeStatus(l);
+          if (st.feil) funn.push({ alvor: 'advarsel', hvor: hvor, i: i, lag: l.id, tekst: navn + ': ' + st.feil });
         }
       }
 
@@ -4835,7 +4956,8 @@ const FELTNAVN = {
   plateRadius: 'hjørner', plateOpasitet: 'synlighet på platen', tekstOpasitet: 'synlighet på teksten',
   kantlinje: 'kantlinje', kantFarge: 'kantfarge', variant: 'telefonfarge', skala: 'størrelse',
   tiltX: 'tilt', tiltY: 'tilt', tiltZ: 'tilt', persp: 'perspektiv', zoom: 'utsnitt',
-  panX: 'utsnitt', panY: 'utsnitt', hoyde: 'høyde', beskjar: 'beskjæring',
+  panX: 'utsnitt', panY: 'utsnitt', statuslinje: 'statuslinje', statuslinjeKilde: 'statuslinje',
+  hoyde: 'høyde', beskjar: 'beskjæring',
   flippH: 'speilvending', flippV: 'speilvending', fargelegg: 'fargelegging',
   fargeleggFarge: 'fargelegging', spenn: 'gjennomgående', type: 'type', c1: 'farge',
   c2: 'farge 2', vinkel: 'vinkel', morkne: 'mørkning', bildeId: 'bakgrunnsbilde', navn: 'navn'
@@ -4892,6 +5014,34 @@ function byggTelefonPanel(boks, l) {
   boks.appendChild(skyv('Zoom', () => l.zoom, v => { l.zoom = v; }, 100, 200, 1, v => v + ' %', norm.zoom, ['zoom']));
   boks.appendChild(skyv('Sideveis', () => l.panX, v => { l.panX = v; }, -100, 100, 1, v => v + ' %', norm.panX, ['panX']));
   boks.appendChild(skyv('Opp / ned', () => l.panY, v => { l.panY = v; }, -100, 100, 1, v => v + ' %', norm.panY, ['panY']));
+
+  const modus = l.statuslinje || 'behold';
+  boks.appendChild(el('<div style="font-size:12px;color:var(--gra);margin-top:2px">Statuslinje</div>'));
+  boks.appendChild(segrad([
+    { label: 'Behold', aktiv: modus === 'behold', velg: () => endre(() => { l.statuslinje = 'behold'; }, { struktur: true }) },
+    { label: 'Skjul', aktiv: modus === 'skjul', velg: () => endre(() => { l.statuslinje = 'skjul'; }, { struktur: true }) },
+    { label: 'Bytt ut', aktiv: modus === 'bytt', velg: () => endre(() => { l.statuslinje = 'bytt'; }, { struktur: true }) }
+  ], ['statuslinje']));
+  if (modus === 'bytt') {
+    boks.appendChild(knapperad([
+      { label: l.statuslinjeKilde ? 'Bytt statuslinje' : 'Velg statuslinje', klikk: () => {
+        pickFile('image/png,image/jpeg,image/webp', false, filer => {
+          lesFilerTilBilder(filer).then(ider => {
+            if (!ider[0]) return;
+            endre(() => { l.statuslinjeKilde = ider[0]; }, { struktur: true, tving: true });
+            speilHvisPaa(['statuslinjeKilde']);
+          });
+        });
+      } }
+    ]));
+  }
+  if (modus !== 'behold') {
+    const st = statuslinjeStatus(l);
+    const hjelp = modus === 'skjul'
+      ? 'Fasade dekker statuslinjen med bakgrunnsfargen i skjermbildet.'
+      : 'Fasade bruker statuslinjen fra skjermbildet du valgte.';
+    boks.appendChild(el('<div class="varsel">' + (st.feil || hjelp) + '</div>'));
+  }
 }
 
 function byggTekstPanel(boks, l) {
@@ -5645,7 +5795,7 @@ function kopierMerkede(klippUt) {
   if (!flokk.length) return;
   const bildekart = {};
   flokk.forEach(l => {
-    [l.bildeId, l.skjermbildeId].forEach(id => {
+    [l.bildeId, l.skjermbildeId, l.statuslinjeKilde].forEach(id => {
       const b = id && bilder.get(id);
       if (b) bildekart[id] = b.url;
     });
