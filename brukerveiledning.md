@@ -85,6 +85,13 @@ riktig størrelse og sømløse overganger.
 
 - «Velg skjermbilde» i panelet. Ni rammefarger, og størrelse og utsnitt for hver
   telefon.
+- Under «Modell» velger du iPhone 17 Pro eller iPhone 18 Pro. Velg modellen du
+  tok skjermbildet på, så får rammen riktig Dynamic Island.
+- Ta skjermbildene på en iPhone 17 Pro eller 18 Pro, også når formatet er 6,9
+  tommer. Skjermbilder fra en Pro Max passer ikke til rammen, og «Sjekk serien»
+  sier fra.
+- «Sjekk serien» ser ikke om du har valgt feil modell. iPhone 17 Pro og 18 Pro
+  tar skjermbilder i samme størrelse.
 - «+ Grafikk» legger inn en logo eller et symbol. «Ensfarget» farger det i én
   farge.
 
@@ -128,6 +135,7 @@ Sjekken finner:
 - Eksempeltekst som står igjen
 - Bilder med samme overskrift
 - Skjermbilder med for lav oppløsning
+- Skjermbilder som ikke passer til rammen
 - Tekst utenfor bildet
 - Lag nærmere kanten enn margen
 - Svak kontrast mellom tekst og bakgrunn

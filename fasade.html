@@ -656,7 +656,21 @@ const FORMATER = {
 // The frame file is 880 x 1832 with the screen at 38,42 / 804 x 1748 (radius 57).
 const RAMME = { w: 880, h: 1832, sx: 38, sy: 42, sw: 804, sh: 1748, sr: 57 };
 const TEKSTUR_SKALA = 2;                 // the frame is rasterized at double resolution
-const TYKK = 8.75 / 78.0;                // thickness relative to the width, like a real phone
+
+// The body in mm, from Apple's dimensional drawings. iPhone 17 Pro and 18 Pro share
+// the body, the buttons and the ports. The frame artwork is 12,0 units per mm.
+const MM = 12.0;
+const KROPP = { b: 71.85, h: 150.01, d: 8.75 };
+const TYKK = KROPP.d * MM / RAMME.w;     // thickness relative to the frame width
+
+// The models the frame can show. The Dynamic Island's width, the camera plateau's
+// depth and the diameter of the holes in the bottom differ, in mm. Both take
+// screenshots of 1206 x 2622 px.
+const MODELLER = {
+  '17pro': { navn: 'iPhone 17 Pro', oy: 20.76, plataa: 2.55, hull: 1.06 },
+  '18pro': { navn: 'iPhone 18 Pro', oy: 15.66, plataa: 2.78, hull: 1.53 }
+};
+function modellFor(lag) { return MODELLER[lag.modell || '17pro']; }
 
 // The frames are embedded as data URIs so the tool also works when the file
 // is opened directly from Finder (file://) without a web server. Data URIs also never
@@ -701,7 +715,7 @@ const HJORNE = 0.045;      // the rounding of the screenshots in the store
 const EKSPORTGRUNN = '#ffffff';
 
 // Semantic version (MAJOR.MINOR.PATCH); the README says when each part goes up
-const VERSJON = '1.1.0';
+const VERSJON = '1.2.0';
 
 // Shortcut labels: ⌘ and ⇧ on a Mac, Ctrl+ and Skift+ elsewhere
 const ER_MAC = !!navigator.platform && /Mac/i.test(navigator.platform);
@@ -762,6 +776,7 @@ function nyttTelefonlag(over) {
     rolleId: null, avvik: {},         // link to the template for the series
     skala: 0.56, opasitet: 100,
     variant: 'silver',
+    modell: '17pro',                  // a key in MODELLER
     skjermbildeId: null,
     statuslinje: 'behold',            // 'behold', 'skjul' or 'bytt'
     statuslinjeKilde: null,           // the screenshot 'bytt' takes the status bar from
@@ -893,7 +908,7 @@ function nySlide(format) {
 
 const state = {
   prosjekt: {
-    versjon: 3,
+    versjon: 4,
     format: 'iphone69',
     appnavn: 'app',
     aktiv: 0,
@@ -991,6 +1006,7 @@ function normaliserProsjekt(p) {
       if (l.rolleId === undefined) l.rolleId = null;
       if (!l.avvik) l.avvik = {};
       if (l.type === 'telefon' && !l.statuslinje) { l.statuslinje = 'behold'; l.statuslinjeKilde = null; }
+      if (l.type === 'telefon' && !MODELLER[l.modell]) l.modell = '17pro';
       if (l.type !== 'tekst') return;
       const nt = nyttTekstlag();
       ['platePadX', 'platePadY', 'plateRadius', 'plateOpasitet', 'tekstOpasitet'].forEach(f => {
@@ -1003,7 +1019,10 @@ function normaliserProsjekt(p) {
   if (!p.mal && p.slides && p.slides.length) p.mal = byggMalFraProsjekt(p);
   if (p.mal) p.mal.roller.forEach(r => {
     if (r.type === 'telefon' && !r.felt.statuslinje) { r.felt.statuslinje = 'behold'; r.felt.statuslinjeKilde = null; }
+    if (r.type === 'telefon' && !MODELLER[r.felt.modell]) r.felt.modell = '17pro';
   });
+  // Needs the silhouette; without it the phones cannot be drawn, and the project converts later
+  if ((p.versjon || 0) < 4 && kontur) tilVersjon4(p);
   return p;
 }
 
@@ -1252,6 +1271,7 @@ const rammebilder = {};        // base-id -> Image (SVG)
 const fargelagtCache = new Map();   // variant id -> canvas at texture resolution
 const kroppsfargeCache = new Map(); // variant-id -> {r,g,b}
 let kontur = null;             // [{x,y,nx,ny}] normalized to -0.5..0.5 of the frame's face
+let konturVersjon3 = null;     // the outline as project files up to version 3 measured sizes by
 let rammerKlare = false;
 
 function lastRammer() {
@@ -1327,25 +1347,43 @@ function lagKontur() {
     }
     return ut;
   };
+  // A closed Catmull-Rom spline through the points, with del points per segment
+  const spline = (pts, del) => {
+    const n = pts.length, ut = [];
+    for (let i = 0; i < n; i++) {
+      const a = pts[(i + n - 1) % n], b = pts[i], c = pts[(i + 1) % n], d = pts[(i + 2) % n];
+      for (let k = 0; k < del; k++) {
+        const t = k / del, t2 = t * t, t3 = t2 * t;
+        const f = (p0, p1, p2, p3) => 0.5 * (2 * p1 + (p2 - p0) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (3 * p1 - p0 - 3 * p2 + p3) * t3);
+        ut.push({ x: f(a.x, b.x, c.x, d.x), y: f(a.y, b.y, c.y, d.y) });
+      }
+    }
+    return ut;
+  };
   // Light smoothing: heavy smoothing pulls the contour inward in the arcs at the top and
-  // bottom, clipping the frame there. Precision is preserved by using more points.
-  p = omfordel(jevn(p, 3), 300);
-  const n = p.length;
-  for (let i = 0; i < n; i++) {
-    // Normal in pixel space (aspect-corrected), then normalized
-    const q0 = p[(i + n - 4) % n], q1 = p[(i + 4) % n];
-    const tx = (q1.x - q0.x) * RAMME.w, ty = (q1.y - q0.y) * RAMME.h;
-    const L = Math.hypot(tx, ty) || 1;
-    p[i].nx = ty / L; p[i].ny = -tx / L;
-  }
-  // Push the contour a couple of pixels outward along the normal, so the 3D body always
-  // reaches all the way to the frame's antialiased edge instead of stopping just inside it
-  const skyvUt = 2.0;
-  for (let i = 0; i < n; i++) {
-    p[i].x += p[i].nx * skyvUt / w;
-    p[i].y += p[i].ny * skyvUt / h;
-  }
-  return p;
+  // bottom, clipping the frame there. Resampling to 300 points and one more light pass
+  // even out the one-pixel dents of the traced edge (moving it less than 0,1 mm), and a
+  // spline through them gives 900 points, so the rounded corners stay smooth even on a
+  // large, tilted phone.
+  // Normals from the neighbours `spenn` points away on each side, in pixel space
+  // (aspect-corrected). Then the contour is pushed a couple of pixels outward, so the
+  // 3D body always reaches all the way to the frame's antialiased edge.
+  const medNormaler = (pts, spenn) => {
+    const n = pts.length, skyvUt = 2.0;
+    const ut = pts.map(q => ({ x: q.x, y: q.y }));
+    for (let i = 0; i < n; i++) {
+      const q0 = pts[(i + n - spenn) % n], q1 = pts[(i + spenn) % n];
+      const tx = (q1.x - q0.x) * RAMME.w, ty = (q1.y - q0.y) * RAMME.h;
+      const L = Math.hypot(tx, ty) || 1;
+      ut[i].nx = ty / L; ut[i].ny = -tx / L;
+      ut[i].x += ut[i].nx * skyvUt / w;
+      ut[i].y += ut[i].ny * skyvUt / h;
+    }
+    return ut;
+  };
+  const p300 = omfordel(jevn(p, 3), 300);
+  konturVersjon3 = medNormaler(p300, 4);
+  return medNormaler(spline(jevn(p300, 1), 3), 12);
 }
 
 // Duotone: each pixel in the silver frame gets a new color from a three-step scale based on brightness.
@@ -1384,17 +1422,17 @@ function fargelagtRamme(variantId) {
   return c;
 }
 
-// The body color (the sides and back) is read from the finished, colored frame,
-// so the 3D body always matches the frame it sits behind.
+// The metal color is read from the finished, colored frame, on the metal band just
+// inside the outline and below the buttons, so the 3D body matches the artwork's colour.
 function kroppsfarge(variantId) {
   if (kroppsfargeCache.has(variantId)) return kroppsfargeCache.get(variantId);
   const c = fargelagtRamme(variantId);
   const x = c.getContext('2d', { willReadFrequently: true });
-  const h = c.height;
+  const h = c.height, kant = 16 * TEKSTUR_SKALA;
   let sr = 0, sg = 0, sb = 0, n = 0;
-  for (let k = 0.3; k <= 0.71; k += 0.1) {
+  for (let k = 0.5; k <= 0.76; k += 0.05) {
     const y = Math.floor(h * k);
-    [4, c.width - 5].forEach(px => {
+    [kant, c.width - 1 - kant].forEach(px => {
       const d = x.getImageData(px, y, 1, 1).data;
       if (d[3] > 100) { sr += d[0]; sg += d[1]; sb += d[2]; n++; }
     });
@@ -1402,6 +1440,20 @@ function kroppsfarge(variantId) {
   const ut = n ? { r: sr / n, g: sg / n, b: sb / n } : hexTilRgb('#c9c8c3');
   kroppsfargeCache.set(variantId, ut);
   return ut;
+}
+
+// The Dynamic Island in the frame artwork is the iPhone 17 Pro's: a black stadium
+// 20,76 mm wide, with the front camera near its right end
+const RAMME_OY = { x: 316, y: 70, w: 248, h: 72, mm: 20.76, kamera: 529 };
+
+// A stadium path for an island of the given width in frame units, centred like the artwork's
+function oySti(x, bredde, luft) {
+  const TS = TEKSTUR_SKALA, r = RAMME_OY.h / 2;
+  const midtX = RAMME_OY.x + RAMME_OY.w / 2, midtY = RAMME_OY.y + r;
+  x.beginPath();
+  x.arc((midtX - bredde / 2 + r) * TS, midtY * TS, (r + luft) * TS, Math.PI / 2, Math.PI * 1.5);
+  x.arc((midtX + bredde / 2 - r) * TS, midtY * TS, (r + luft) * TS, -Math.PI / 2, Math.PI / 2);
+  x.closePath();
 }
 
 /* =============================== 3D math (shared by GL and shadow) =============================== */
@@ -1420,9 +1472,20 @@ function rot3(px, py, pz, cfg) {
 
 function proj(px, py, pz, cfg, cx, cy) {
   const p = rot3(px, py, pz, cfg);
-  const f = cfg.persp;
-  const s = f / Math.max(f - p.z, f * 0.15);
+  const s = cfg.persp / (cfg.persp - p.z);
   return { x: cx + p.x * s, y: cy + p.y * s };
+}
+
+// The camera distance for a phone of this size. The depth setting is the distance,
+// but the nearest corner always stays at least a third of it away from the camera,
+// so no part of a large, strongly tilted phone is drawn more than three times its size.
+function kameraAvstand(cfg, pw, ph) {
+  const D = pw * TYKK;
+  let naermest = 0;
+  [-1, 1].forEach(a => [-1, 1].forEach(b => [-1, 1].forEach(c => {
+    naermest = Math.max(naermest, rot3(a * pw / 2, b * ph / 2, c * D / 2, cfg).z);
+  })));
+  return Math.max(cfg.persp, naermest * 1.5);
 }
 
 function rotasjonsMatrise(cfg) {
@@ -1448,14 +1511,37 @@ function omrissPunkter(cfg, cx, cy, pw, ph, z) {
   return kontur.map(p => proj(p.x * pw, p.y * ph, z, cfg, cx, cy));
 }
 
-// The largest size that fits in the canvas at the current tilt, so that
-// scale 1,0 always goes all the way to the edge without the frame being cut off.
+// The phone's projected bounds around its center point, from every point of the body
+// and with the same math as the shader
+const grenseCache = new Map();
+function telefonGrenser(cfg, pw, ph) {
+  const key = [cfg.tiltX, cfg.tiltY, cfg.tiltZ, cfg.persp, cfg.plataa, pw, ph].join('|');
+  if (grenseCache.has(key)) return grenseCache.get(key);
+  const g = { x0: -pw / 2, y0: -ph / 2, x1: pw / 2, y1: ph / 2 };
+  if (telefonKropp) {
+    g.x0 = g.y0 = Infinity; g.x1 = g.y1 = -Infinity;
+    const s = telefonKropp.skrog, pxPerMm = pw * MM / RAMME.w;
+    for (let i = 0; i < s.length; i += 4) {
+      const q = proj(s[i] * pw, s[i + 1] * ph, (s[i + 2] - s[i + 3] * cfg.plataa) * pxPerMm, cfg, 0, 0);
+      g.x0 = Math.min(g.x0, q.x); g.y0 = Math.min(g.y0, q.y);
+      g.x1 = Math.max(g.x1, q.x); g.y1 = Math.max(g.y1, q.y);
+    }
+  }
+  if (grenseCache.size > 64) grenseCache.delete(grenseCache.keys().next().value);
+  grenseCache.set(key, g);
+  return g;
+}
+
+// The largest size at which the untilted phone fits in the canvas, so that scale 1,0
+// goes all the way to the edge. A tilted phone keeps its untilted size: tilting
+// never makes it grow or shrink.
 const fitCache = new Map();
-function fitFaktor(cfg) {
-  const F = FMT();
-  const key = [F.w, F.h, cfg.tiltX, cfg.tiltY, cfg.tiltZ, cfg.persp].join('|');
+function fitFaktor(persp, F) {
+  F = F || FMT();
+  const key = [F.w, F.h, persp].join('|');
   if (fitCache.has(key)) return fitCache.get(key);
   if (!kontur) return 1;
+  const cfg = { tiltX: 0, tiltY: 0, tiltZ: 0, persp: persp };
   const K0 = Math.min(F.w / RAMME.w, F.h / RAMME.h);
   const PW = RAMME.w * K0, PH = RAMME.h * K0;
   let s = 1;
@@ -1467,7 +1553,7 @@ function fitFaktor(cfg) {
       x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y);
     }));
     if (!(x1 > x0) || !(y1 > y0)) { fitCache.set(key, 1); return 1; }
-    // Same margins as in GLR.tegn, so 100 % size doesn't cut off the side buttons
+    // Room for the side buttons and the edge of the frame artwork
     x0 -= pw * 0.024; x1 += pw * 0.024; y0 -= pw * 0.006; y1 += pw * 0.006;
     s = s * Math.min(F.w / (x1 - x0), F.h / (y1 - y0));
   }
@@ -1475,10 +1561,216 @@ function fitFaktor(cfg) {
   return s;
 }
 
+// Project files up to version 3 store a phone's size relative to the fit at its own
+// tilt, with the thickness measured against 78 mm, the perspective clamped at 15 % of
+// the camera distance and the outline in `konturVersjon3`. This is that fit, so such
+// phones can keep their size.
+function fitFaktorVersjon3(l, F) {
+  const cfg = { tiltX: l.tiltX, tiltY: l.tiltY, tiltZ: l.tiltZ, persp: l.persp };
+  const K0 = Math.min(F.w / RAMME.w, F.h / RAMME.h);
+  let s = 1;
+  for (let k = 0; k < 3; k++) {
+    const pw = RAMME.w * K0 * s, ph = RAMME.h * K0 * s, D = pw * 8.75 / 78.0;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    [D / 2, -D / 2].forEach(z => konturVersjon3.forEach(q => {
+      const p = rot3(q.x * pw, q.y * ph, z, cfg);
+      const f = cfg.persp / Math.max(cfg.persp - p.z, cfg.persp * 0.15);
+      x0 = Math.min(x0, p.x * f); y0 = Math.min(y0, p.y * f);
+      x1 = Math.max(x1, p.x * f); y1 = Math.max(y1, p.y * f);
+    }));
+    if (!(x1 > x0) || !(y1 > y0)) return 1;
+    x0 -= pw * 0.024; x1 += pw * 0.024; y0 -= pw * 0.006; y1 += pw * 0.006;
+    s = s * Math.min(F.w / (x1 - x0), F.h / (y1 - y0));
+  }
+  return s;
+}
+
+// Version 4 stores the size relative to the untilted fit. This is what a version 3
+// size is multiplied by, so the phone keeps the size it had on the canvas.
+function faktorTilVersjon4(l, F) { return fitFaktorVersjon3(l, F) / fitFaktor(l.persp, F); }
+
+// Rescales every phone in a project from version 3 or older: in the slides, the template
+// and the layouts kept for the other formats
+function tilVersjon4(p) {
+  const F0 = FORMATER[p.format] || FORMATER.iphone69;
+  const lagene = new Map();
+  (p.slides || []).forEach(s => (s.lag || []).forEach(l => {
+    lagene.set(l.id, l);
+    if (l.type === 'telefon') l.skala *= faktorTilVersjon4(l, F0);
+  }));
+  if (p.mal) p.mal.roller.forEach(r => { if (r.type === 'telefon') r.felt.skala *= faktorTilVersjon4(r.felt, F0); });
+  Object.keys(p.formatminne).forEach(fmt => {
+    const F = FORMATER[fmt], minne = p.formatminne[fmt];
+    if (!F || !minne) return;
+    Object.keys(minne.lag || {}).forEach(id => {
+      const l = lagene.get(id), g = minne.lag[id];
+      if (l && l.type === 'telefon' && typeof g.skala === 'number') g.skala *= faktorTilVersjon4(l, F);
+    });
+    if (minne.mal) minne.mal.roller.forEach(r => { if (r.type === 'telefon') r.felt.skala *= faktorTilVersjon4(r.felt, F); });
+  });
+  p.versjon = 4;
+}
+
+/* =============================== Phone body =============================== */
+// The body is built in mm around the silhouette: the edge profile, the buttons and
+// the camera plateau. The openings in the side wall are drawn by the shader in GLR.
+
+// The edge in cross-section, the same on all four sides: [inset from the outline,
+// height above the middle of the thickness] in mm, from the glass to the back. The
+// metal is flat in the middle of the thickness and rolls over to the glass in front.
+const PROFIL = (() => {
+  const ut = [[2.61, 4.375], [1.95, 4.35], [1.2, 4.29]];
+  for (let g = 90; g >= 0; g -= 10) {
+    const t = g * Math.PI / 180;
+    ut.push([0.9 * (1 - Math.cos(t)), 1.5 + 2.74 * Math.sin(t)]);
+  }
+  return ut.concat([[0, -1.44], [0.05, -2.2], [0.17, -2.86], [0.45, -3.55], [0.97, -4.01],
+    [1.6, -4.25], [2.35, -4.35], [3.0, -4.37], [3.79, -4.375]]);
+})();
+// The first three points are the edge of the glass, covered by the artwork; the metal
+// starts at the third. The flat side ends where the back edge begins.
+const PROFIL_GLASS = 3;
+const PROFIL_BAKKANT = PROFIL.findIndex(p => p[1] < 0);
+
+// The buttons: [side (-1 left, 1 right), centre from the top edge, length] in mm.
+// All are 2,66 mm tall, centred in the thickness, and stand 0,45 mm proud of the side.
+const KNAPPER = [[-1, 34.28, 6.90], [-1, 48.43, 11.20], [-1, 62.63, 11.20], [1, 55.53, 17.70]];
+const KNAPP = { h: 2.66, ut: 0.45 };
+
+// The camera plateau covers the full width at the top of the back: 44,5 mm long with
+// 7 mm corners. Its depth depends on the model.
+const PLATAA = { lengde: 44.5, hjorne: 7 };
+
+// Points around a stadium lying along y, with half-length hl and radius r, and their outward normals
+function stadion(hl, r) {
+  const ut = [];
+  [[hl - r, -90], [-(hl - r), 90]].forEach(([cy, fra]) => {
+    for (let k = 0; k <= 12; k++) {
+      const a = (fra + 15 * k) * Math.PI / 180;
+      ut.push({ y: cy + r * Math.cos(a), z: r * Math.sin(a), ny: Math.cos(a), nz: Math.sin(a) });
+    }
+  });
+  return ut;
+}
+
+// Vertices as aPos(2) aZ(1) aN(3) aUV(2) aMat(1). aMat: 0 front with the artwork, 1 side wall
+// with openings, 2 back, 3 plain metal, 4 plain metal moved back by the plateau depth.
+// The hull holds x, y, z (mm) and 1 for points the plateau moves, for the projected bounds.
+let telefonKropp = null;
+function byggKropp() {
+  const tilX = mm => mm * MM / RAMME.w, tilY = mm => mm * MM / RAMME.h;
+  const vd = [], metall = [], front = [], skrog = [];
+  const punkt = (x, y, z, nx, ny, nz, u, v, mat) => {
+    vd.push(x, y, z / KROPP.d, nx, ny, nz, u, v, mat);
+    skrog.push(x, y, z, mat === 4 ? 1 : 0);
+    return vd.length / 9 - 1;
+  };
+  const baand = (ut, r0, r1, m) => {
+    for (let i = 0; i < m; i++) {
+      const j = (i + 1) % m;
+      ut.push(r0 + i, r0 + j, r1 + j, r0 + i, r1 + j, r1 + i);
+    }
+  };
+  const vifte = (ut, senter, r, m) => { for (let i = 0; i < m; i++) ut.push(senter, r + i, r + (i + 1) % m); };
+  // Outward normal of the profile at point k, as [outward, forward]
+  const profilNormal = k => {
+    const a = PROFIL[Math.max(0, k - 1)], b = PROFIL[Math.min(PROFIL.length - 1, k + 1)];
+    const tr = a[0] - b[0], tz = b[1] - a[1];
+    const L = Math.hypot(tr, tz) || 1;
+    return [-tz / L, tr / L];
+  };
+  // One ring of the profile around an outline of points {x, y, nx, ny}
+  const ring = (omriss, k, mat) => {
+    const [inn, z] = PROFIL[k];
+    const [nr, nz] = profilNormal(k);
+    const start = vd.length / 9;
+    omriss.forEach(p => {
+      const x = p.x - p.nx * tilX(inn), y = p.y - p.ny * tilY(inn);
+      if (mat === 0) punkt(x, y, z, 0, 0, 1, x + 0.5, y + 0.5, 0);
+      else punkt(x, y, z, p.nx * nr, p.ny * nr, nz, 0, 0, mat);
+    });
+    return start;
+  };
+  const n = kontur.length;
+
+  // Front: the artwork over the glass. It keeps the flat front's normal, since the
+  // artwork has its own light drawn in. The artwork's metal rim and side buttons lie
+  // outside the glass and are left out; the metal below is built instead.
+  let forrige = null;
+  for (let k = 0; k < PROFIL_GLASS; k++) {
+    const r = ring(kontur, k, 0);
+    if (forrige !== null) baand(front, forrige, r, n);
+    forrige = r;
+  }
+  vifte(front, punkt(0, 0, KROPP.d / 2, 0, 0, 1, 0.5, 0.5, 0), 0, n);
+
+  // Metal side and back
+  forrige = null;
+  for (let k = PROFIL_GLASS - 1; k < PROFIL.length; k++) {
+    const r = ring(kontur, k, 1);
+    if (forrige !== null) baand(metall, forrige, r, n);
+    forrige = r;
+  }
+  const bak = vd.length / 9;
+  const [innBak, zBak] = PROFIL[PROFIL.length - 1];
+  kontur.forEach(p => punkt(p.x - p.nx * tilX(innBak), p.y - p.ny * tilY(innBak), zBak, 0, 0, -1, 0, 0, 2));
+  vifte(metall, punkt(0, 0, zBak, 0, 0, -1, 0, 0, 2), bak, n);
+
+  // The straight sides, in the frame's coordinates
+  const xVenstre = Math.min(...kontur.filter(p => Math.abs(p.y) < 0.25).map(p => p.x));
+  const xHoyre = Math.max(...kontur.filter(p => Math.abs(p.y) < 0.25).map(p => p.x));
+
+  // Buttons: a stadium standing out from the side, with a softly rounded top edge
+  KNAPPER.forEach(([side, midt, lengde]) => {
+    const xv = side < 0 ? xVenstre : xHoyre, yc = midt - KROPP.h / 2;
+    const omriss = stadion(lengde / 2, KNAPP.h / 2), m = omriss.length;
+    const lagRing = (t, krymp, normal) => {
+      const start = vd.length / 9;
+      omriss.forEach(o => {
+        const [nx, ny, nz] = normal(o);
+        punkt(xv + side * tilX(t), tilY(yc + o.y - o.ny * krymp), o.z - o.nz * krymp, nx, ny, nz, 0, 0, 3);
+      });
+      return start;
+    };
+    const sideN = o => [0, o.ny, o.nz];
+    const kantN = o => { const L = Math.hypot(0.8, 0.6); return [side * 0.8 / L, o.ny * 0.6 / L, o.nz * 0.6 / L]; };
+    const r0 = lagRing(-0.15, 0, sideN), r1 = lagRing(KNAPP.ut - 0.12, 0, sideN), r2 = lagRing(KNAPP.ut, 0.12, kantN);
+    baand(metall, r0, r1, m);
+    baand(metall, r1, r2, m);
+    const lokk = lagRing(KNAPP.ut, 0.12, () => [side, 0, 0]);
+    vifte(metall, punkt(xv + side * tilX(KNAPP.ut), tilY(yc), 0, side, 0, 0, 0, 0, 3), lokk, m);
+  });
+
+  // Camera plateau: the silhouette above the plateau's lower corners, closed by the corners.
+  // Its side starts where the flat side ends, and its back edge rolls over like the body's.
+  const yb = PLATAA.lengde - KROPP.h / 2, R = PLATAA.hjorne;
+  const yMm = p => p.y * RAMME.h / MM;
+  const topp = kontur.map((p, i) => i).filter(i => yMm(kontur[i]) < yb - R);
+  const brudd = topp.findIndex((i, k) => k > 0 && i !== topp[k - 1] + 1);
+  const fot = (brudd > 0 ? topp.slice(brudd).concat(topp.slice(0, brudd)) : topp).map(i => kontur[i]);
+  const hjorne = (xc, fra) => {
+    for (let g = fra; g <= fra + 90; g += 10) {
+      const a = g * Math.PI / 180;
+      fot.push({ x: tilX(xc + R * Math.cos(a)), y: tilY(yb - R + R * Math.sin(a)), nx: Math.cos(a), ny: Math.sin(a) });
+    }
+  };
+  hjorne(xHoyre * RAMME.w / MM - R, 0);
+  hjorne(xVenstre * RAMME.w / MM + R, 90);
+  const m = fot.length;
+  forrige = ring(fot, PROFIL_BAKKANT, 3);
+  for (let k = PROFIL_BAKKANT; k < PROFIL.length; k++) {
+    const r = ring(fot, k, 4);
+    baand(metall, forrige, r, m);
+    forrige = r;
+  }
+  vifte(metall, punkt(0, tilY((yb - KROPP.h / 2) / 2), zBak, 0, 0, -1, 0, 0, 4), forrige, m);
+
+  return { vd: vd, idx: metall.concat(front), antMetall: metall.length, antFront: front.length, skrog: skrog };
+}
+
 /* =============================== WebGL renderer =============================== */
-// The phone is built as a rounded slab: the front is textured with frame +
-// screenshot, the side wall and back are lit per pixel. The normals are rounded
-// between front and side wall, so the metal gets a smooth, soft transition without stripes.
+// The body from byggKropp. The front is textured with frame + screenshot, the metal
+// is lit per pixel, and the shader draws the openings and the Camera Control into the side.
 
 const GLR = {
   klar: false,
@@ -1491,22 +1783,45 @@ const GLR = {
     const vsKilde = `
       attribute vec2 aPos; attribute float aZ; attribute vec3 aN; attribute vec2 aUV; attribute float aMat;
       uniform vec2 uSize; uniform float uD; uniform mat3 uR; uniform float uF; uniform vec2 uUt; uniform vec2 uC;
-      varying vec3 vN; varying vec2 vUV; varying float vMat;
+      uniform vec3 uMm; uniform float uPlataa;
+      varying vec3 vN; varying vec2 vUV; varying float vMat; varying vec3 vP;
       void main() {
-        vec3 p = uR * vec3(aPos * uSize, aZ * uD);
+        // The plateau's back sits as far back as this model's plateau is deep
+        float bak = aMat > 3.5 ? uPlataa : 0.0;
+        vec3 p = uR * vec3(aPos * uSize, aZ * uD - bak);
         vN = uR * aN;
         vUV = aUV; vMat = aMat;
+        vP = vec3(aPos * uMm.xy, aZ * uMm.z);   // mm from the middle of the body
         float w = (uF - p.z) / uF;
         float X = (p.x + uC.x * w) * 2.0 / uUt.x;
         float Y = -(p.y + uC.y * w) * 2.0 / uUt.y;
-        float Z = ((2500.0 - p.z) / 6000.0) * w;
+        // Depth as 1 - 0.2/w: linear in screen space, so it interpolates correctly across
+        // large triangles and the back never shows through the front
+        float Z = w - 0.2;
         gl_Position = vec4(X, Y, Z, w);
       }`;
 
+    // Positions in mm need high precision for the thin lines around the openings
     const fsFarge = `
+      #ifdef GL_FRAGMENT_PRECISION_HIGH
+      precision highp float;
+      #else
       precision mediump float;
-      uniform vec3 uKropp; uniform vec3 uBak;
-      varying vec3 vN; varying vec2 vUV; varying float vMat;
+      #endif
+      uniform vec3 uKropp; uniform vec3 uBak; uniform float uAa; uniform float uHull;
+      varying vec3 vN; varying vec2 vUV; varying float vMat; varying vec3 vP;
+
+      // Signed distance in mm to a stadium lying along x: centre c, half-length hl, radius r
+      float stadion(vec2 p, vec2 c, float hl, float r) {
+        vec2 q = abs(p - c);
+        q.x = max(q.x - (hl - r), 0.0);
+        return length(q) - r;
+      }
+      // How much of the pixel lies inside a shape, soft over about one pixel
+      float inni(float d) { return 1.0 - smoothstep(-uAa, uAa, d); }
+      // How much lies on a line of width w just outside a shape
+      float kant(float d, float w) { return inni(d - w) - inni(d); }
+
       void main() {
         vec3 N = normalize(vN);
         vec3 L = normalize(vec3(-0.38, -0.62, 0.68));
@@ -1514,8 +1829,52 @@ const GLR = {
         vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
         float spek = pow(max(dot(N, H), 0.0), 42.0) * 0.5;
         float mot = max(dot(N, normalize(vec3(0.55, 0.25, 0.35))), 0.0) * 0.14;
-        vec3 base = vMat > 1.5 ? uBak : uKropp;
-        vec3 c = base * (0.42 + 0.60 * diff + mot) + vec3(spek);
+        vec3 base = vMat > 1.5 && vMat < 2.5 ? uBak : uKropp;
+        vec3 m = base * (0.42 + 0.60 * diff + mot);
+        vec3 c = m + vec3(spek);
+        // Antenna lines across the long sides, also where the plateau makes the side deeper
+        if (!(vMat > 1.5 && vMat < 2.5) && abs(vP.x) > 34.0) {
+          float y = vP.y + 75.005;
+          float antenne = min(abs(y - 16.14) - 0.79, abs(y - 133.85) - 0.75);
+          c = mix(c, vec3(dot(c, vec3(0.299, 0.587, 0.114))) * 0.85, inni(antenne) * 0.55);
+        }
+        if (vMat > 0.5 && vMat < 1.5) {
+          // Bottom edge: USB-C with its tongue, two screws, and five holes on each side
+          // for the speaker and the microphones
+          if (vP.y > 72.0 && abs(vP.x) < 24.0) {
+            vec2 p = vec2(vP.x, vP.z);
+            float usb = stadion(p, vec2(0.0), 4.5, 1.57);
+            c = mix(c, min(m * 1.2 + vec3(spek), vec3(1.0)), kant(usb, 0.2));
+            c = mix(c, vec3(0.035), inni(usb));
+            c = mix(c, vec3(0.13), inni(stadion(p, vec2(0.0), 3.3, 0.33)) * inni(usb));
+            for (int i = 0; i < 2; i++) {
+              float s = length(p - vec2(i == 0 ? -6.925 : 6.925, 0.0)) - 0.75;
+              c = mix(c, m * 0.62, inni(s));
+              c = mix(c, m * 0.35, min(kant(s, 0.08) + inni(s + 0.5), 1.0));
+            }
+            for (int i = 0; i < 5; i++) {
+              float x = 11.505 + float(i) * 2.255;
+              float h = min(length(p - vec2(x, 0.0)), length(p + vec2(x, 0.0))) - uHull;
+              c = mix(c, min(m * 1.12, vec3(1.0)), kant(h, 0.08));
+              c = mix(c, vec3(0.04), inni(h));
+            }
+          }
+          // The long sides, in mm from the top edge: the gaps around the buttons, and
+          // the Camera Control, a flush sapphire strip on the right
+          if (abs(vP.x) > 34.0) {
+            vec2 p = vec2(vP.y + 75.005, vP.z);
+            if (vP.x < 0.0) {
+              float g = min(stadion(p, vec2(34.28, 0.0), 3.45, 1.33),
+                min(stadion(p, vec2(48.43, 0.0), 5.6, 1.33), stadion(p, vec2(62.63, 0.0), 5.6, 1.33)));
+              c = mix(c, m * 0.3, kant(g, 0.1));
+            } else {
+              c = mix(c, m * 0.3, kant(stadion(p, vec2(55.53, 0.0), 8.85, 1.33), 0.1));
+              float cc = stadion(p, vec2(98.40, 0.0), 8.55, 1.515);
+              c = mix(c, min(m * 0.9 + vec3(spek * 1.8), vec3(1.0)), inni(cc));
+              c = mix(c, m * 0.35, kant(cc, 0.1));
+            }
+          }
+        }
         gl_FragColor = vec4(min(c, vec3(1.0)), 1.0);
       }`;
 
@@ -1552,6 +1911,8 @@ const GLR = {
     this.progFarge = lagProgram(fsFarge);
     this.progTex = lagProgram(fsTekstur);
     if (!this.progFarge || !this.progTex) return false;
+    const vindu = gl.getParameter(gl.MAX_VIEWPORT_DIMS);
+    this.maksGpu = Math.min(vindu[0], vindu[1], gl.getParameter(gl.MAX_RENDERBUFFER_SIZE));
 
     this.tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, this.tex);
@@ -1563,61 +1924,18 @@ const GLR = {
     return true;
   },
 
-  // The geometry is built once when the contour is ready
+  // Uploads the body once it is built
   byggGeometri() {
     const gl = this.gl;
-    const n = kontur.length;
-    // Profile from front to back: z as a fraction of the thickness, b = how much
-    // the normal tilts outward (0 = straight front/back, 1 = straight out to the side)
-    const profil = [
-      { z: 0.5, b: 0.30 }, { z: 0.40, b: 0.80 }, { z: 0.24, b: 1.0 },
-      { z: -0.24, b: 1.0 }, { z: -0.40, b: 0.85 }, { z: -0.5, b: 0.55 }
-    ];
-    const vd = [];   // aPos(2) aZ(1) aN(3) aUV(2) aMat(1) = 9 floats
-    const leggTil = (px, py, z, nx, ny, nz, u, v, mat) => { vd.push(px, py, z, nx, ny, nz, u, v, mat); };
-
-    // Side wall
-    profil.forEach(pr => {
-      for (let i = 0; i < n; i++) {
-        const k = kontur[i];
-        const lat = pr.b, nzz = (1 - pr.b) * (pr.z >= 0 ? 1 : -1);
-        const L = Math.hypot(k.nx * lat, k.ny * lat, nzz) || 1;
-        leggTil(k.x, k.y, pr.z, k.nx * lat / L, k.ny * lat / L, nzz / L, 0, 0, 1);
-      }
-    });
-    const sideStart = 0;
-    const idx = [];
-    for (let r = 0; r < profil.length - 1; r++) {
-      for (let i = 0; i < n; i++) {
-        const j = (i + 1) % n;
-        const a = sideStart + r * n + i, b = sideStart + r * n + j;
-        const c = sideStart + (r + 1) * n + i, d = sideStart + (r + 1) * n + j;
-        idx.push(a, b, d, a, d, c);
-      }
-    }
-    // Back: fan from the center point
-    const bakSenter = vd.length / 9;
-    leggTil(0, 0, -0.5, 0, 0, -1, 0, 0, 2);
-    const bakRing = vd.length / 9;
-    for (let i = 0; i < n; i++) leggTil(kontur[i].x, kontur[i].y, -0.5, 0, 0, -1, 0, 0, 2);
-    for (let i = 0; i < n; i++) idx.push(bakSenter, bakRing + ((i + 1) % n), bakRing + i);
-    // Front: the whole frame surface as one textured rectangle. The frame's own
-    // alpha channel decides the outline, so neither the top and bottom arcs nor
-    // the side buttons can get clipped - the outline is only used for the 3D body behind it.
-    const forStart = vd.length / 9;
-    leggTil(-0.5, -0.5, 0.5, 0, 0, 1, 0, 0, 0);
-    leggTil(0.5, -0.5, 0.5, 0, 0, 1, 1, 0, 0);
-    leggTil(0.5, 0.5, 0.5, 0, 0, 1, 1, 1, 0);
-    leggTil(-0.5, 0.5, 0.5, 0, 0, 1, 0, 1, 0);
-    idx.push(forStart, forStart + 1, forStart + 2, forStart, forStart + 2, forStart + 3);
-
-    this.antSideIdx = profil.length ? (profil.length - 1) * n * 6 + n * 3 : 0; // side wall + back
-    this.antForIdx = 6;
-    this.forOffset = this.antSideIdx;
+    const k = telefonKropp;
+    this.antMetallIdx = k.antMetall;
+    this.antForIdx = k.antFront;
+    this.forOffset = k.antMetall;
+    const idx = k.idx;
 
     this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vd), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(k.vd), gl.STATIC_DRAW);
     this.ibo = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibo);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(idx), gl.STATIC_DRAW);
@@ -1651,24 +1969,26 @@ const GLR = {
     if (!this.klar) return null;
     const D = pw * TYKK;
 
-    // Projected bounds computed in JS with the same math as the shader
-    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-    [D / 2, -D / 2].forEach(z => kontur.forEach(p => {
-      const q = proj(p.x * pw, p.y * ph, z, cfg, 0, 0);
-      x0 = Math.min(x0, q.x); y0 = Math.min(y0, q.y);
-      x1 = Math.max(x1, q.x); y1 = Math.max(y1, q.y);
-    }));
-    // The side buttons stick out beyond the body's outline and need extra margin,
-    // and all edges get a bit of room for antialiasing
-    const padX = pw * 0.024 + 4, padY = pw * 0.006 + 4;
-    x0 -= padX; y0 -= padY; x1 += padX; y1 += padY;
+    // The bounds include the buttons and the plateau; the edges get room for antialiasing
+    const g = telefonGrenser(cfg, pw, ph);
+    const x0 = g.x0 - 4, y0 = g.y0 - 4, x1 = g.x1 + 4, y1 = g.y1 + 4;
     const bw = Math.max(2, Math.ceil(x1 - x0)), bh = Math.max(2, Math.ceil(y1 - y0));
 
+    // Supersampling stops at 4096 px. A final render never drops below full resolution,
+    // unless the graphics card cannot make a canvas that large.
+    const stor = Math.max(bw, bh);
     let ss = superSample;
-    const MAKS = 4096;
-    if (Math.max(bw, bh) * ss > MAKS) ss = MAKS / Math.max(bw, bh);
-    const utW = Math.max(2, Math.round(bw * ss)), utH = Math.max(2, Math.round(bh * ss));
+    if (stor * ss > 4096) ss = Math.max(superSample >= 1 ? 1 : 0, 4096 / stor);
+    ss = Math.min(ss, this.maksGpu / stor);
+    let utW = Math.max(2, Math.round(bw * ss)), utH = Math.max(2, Math.round(bh * ss));
     if (this.cv.width !== utW || this.cv.height !== utH) { this.cv.width = utW; this.cv.height = utH; }
+    // A browser may give the canvas a smaller drawing buffer than asked for. The phone is
+    // then rendered at the size it got, instead of being cropped.
+    if (gl.drawingBufferWidth < utW || gl.drawingBufferHeight < utH) {
+      const k = Math.min(gl.drawingBufferWidth / utW, gl.drawingBufferHeight / utH);
+      utW = Math.max(2, Math.floor(utW * k)); utH = Math.max(2, Math.floor(utH * k));
+      this.cv.width = utW; this.cv.height = utH;
+    }
 
     gl.viewport(0, 0, utW, utH);
     gl.clearColor(0, 0, 0, 0);
@@ -1689,13 +2009,18 @@ const GLR = {
       gl.uniform1f(gl.getUniformLocation(prog, 'uF'), cfg.persp);
       gl.uniform2f(gl.getUniformLocation(prog, 'uUt'), bw, bh);
       gl.uniform2f(gl.getUniformLocation(prog, 'uC'), cX, cY);
+      gl.uniform3f(gl.getUniformLocation(prog, 'uMm'), RAMME.w / MM, RAMME.h / MM, KROPP.d);
+      gl.uniform1f(gl.getUniformLocation(prog, 'uPlataa'), cfg.plataa * MM / RAMME.w * pw);
     };
 
     settUniformer(this.progFarge);
     const kr = [kropp.r / 255, kropp.g / 255, kropp.b / 255];
     gl.uniform3f(gl.getUniformLocation(this.progFarge, 'uKropp'), kr[0], kr[1], kr[2]);
     gl.uniform3f(gl.getUniformLocation(this.progFarge, 'uBak'), kr[0] * 0.82, kr[1] * 0.82, kr[2] * 0.82);
-    gl.drawElements(gl.TRIANGLES, this.antSideIdx, this.idxType, 0);
+    // About one output pixel in mm, for soft edges on the openings
+    gl.uniform1f(gl.getUniformLocation(this.progFarge, 'uAa'), 0.75 * RAMME.w / (MM * pw * utW / bw));
+    gl.uniform1f(gl.getUniformLocation(this.progFarge, 'uHull'), cfg.hull / 2);
+    gl.drawElements(gl.TRIANGLES, this.antMetallIdx, this.idxType, 0);
 
     settUniformer(this.progTex);
     gl.activeTexture(gl.TEXTURE0);
@@ -1837,53 +2162,72 @@ function skjermbildeMedStatuslinje(lag, img) {
 
 const teksturCache = new Map();   // key -> canvas (frame + screenshot composited)
 function teksturFor(lag) {
-  const key = [lag.variant, lag.skjermbildeId || 'tom', lag.statuslinje, lag.statuslinjeKilde, lag.zoom, lag.panX, lag.panY].join('|');
+  const key = [lag.variant, lag.modell, lag.skjermbildeId || 'tom', lag.statuslinje, lag.statuslinjeKilde, lag.zoom, lag.panX, lag.panY].join('|');
   if (teksturCache.has(key)) return { c: teksturCache.get(key), key: key };
   const TS = TEKSTUR_SKALA;
   const c = document.createElement('canvas');
   c.width = RAMME.w * TS; c.height = RAMME.h * TS;
   const x = c.getContext('2d');
   const SX = RAMME.sx * TS, SY = RAMME.sy * TS, SW = RAMME.sw * TS, SH = RAMME.sh * TS, SR = RAMME.sr * TS;
+  const skjermflate = () => {
+    x.fillStyle = '#ffffff';
+    x.fillRect(SX, SY, SW, SH);
+    const skjerm = lag.skjermbildeId ? bilder.get(lag.skjermbildeId) : null;
+    if (skjerm && skjerm.img) {
+      const img = skjermbildeMedStatuslinje(lag, skjerm.img);
+      const grunn = Math.max(SW / img.width, SH / img.height);
+      const s = grunn * (lag.zoom / 100);
+      const w = img.width * s, h = img.height * s;
+      const fx = SX + (SW - w) / 2 + (lag.panX / 100) * (w - SW) / 2 * -1;
+      const fy = SY + (SH - h) / 2 + (lag.panY / 100) * (h - SH) / 2 * -1;
+      x.drawImage(img, fx, fy, w, h);
+    } else {
+      x.fillStyle = '#eceae2';
+      x.fillRect(SX, SY, SW, SH);
+      x.fillStyle = '#a9a79d';
+      x.font = '600 ' + (74 * TS) + "px 'Figtree', sans-serif";
+      x.textAlign = 'center';
+      x.fillText('Velg skjermbilde', SX + SW / 2, SY + SH / 2);
+    }
+  };
   x.save();
   x.beginPath();
   if (x.roundRect) x.roundRect(SX, SY, SW, SH, SR);
   else { x.rect(SX, SY, SW, SH); }
   x.clip();
-  x.fillStyle = '#ffffff';
-  x.fillRect(SX, SY, SW, SH);
-  const skjerm = lag.skjermbildeId ? bilder.get(lag.skjermbildeId) : null;
-  if (skjerm && skjerm.img) {
-    const img = skjermbildeMedStatuslinje(lag, skjerm.img);
-    const grunn = Math.max(SW / img.width, SH / img.height);
-    const s = grunn * (lag.zoom / 100);
-    const w = img.width * s, h = img.height * s;
-    const fx = SX + (SW - w) / 2 + (lag.panX / 100) * (w - SW) / 2 * -1;
-    const fy = SY + (SH - h) / 2 + (lag.panY / 100) * (h - SH) / 2 * -1;
-    x.drawImage(img, fx, fy, w, h);
-  } else {
-    x.fillStyle = '#eceae2';
-    x.fillRect(SX, SY, SW, SH);
-    x.fillStyle = '#a9a79d';
-    x.font = '600 ' + (74 * TS) + "px 'Figtree', sans-serif";
-    x.textAlign = 'center';
-    x.fillText('Velg skjermbilde', SX + SW / 2, SY + SH / 2);
-  }
+  skjermflate();
   x.restore();
-  x.drawImage(fargelagtRamme(lag.variant), 0, 0, c.width, c.height);
+  const ramme = fargelagtRamme(lag.variant);
+  x.drawImage(ramme, 0, 0, c.width, c.height);
+  // A model with another island: the screen shows through the artwork's island again,
+  // and the model's island is drawn on top with the camera moved along with its right end
+  const modell = modellFor(lag);
+  if (modell.oy !== RAMME_OY.mm) {
+    const w = RAMME_OY.w * modell.oy / RAMME_OY.mm;
+    x.save();
+    oySti(x, RAMME_OY.w, 1);
+    x.clip();
+    skjermflate();
+    x.restore();
+    x.fillStyle = '#000';
+    oySti(x, w, 0);
+    x.fill();
+    const kx = (RAMME_OY.kamera - 16) * TS, ky = (RAMME_OY.y + RAMME_OY.h / 2 - 16) * TS, ks = 32 * TS;
+    x.drawImage(ramme, kx, ky, ks, ks, kx + (w - RAMME_OY.w) / 2 * TS, ky, ks, ks);
+  }
   if (teksturCache.size > 12) teksturCache.delete(teksturCache.keys().next().value);
   teksturCache.set(key, c);
   return { c: c, key: key };
 }
 
 const telefonCache = new Map();   // key -> {c,x0,y0,w,h}
-function telefonSnapshot(lag, pw, ph, kvalitet) {
-  const key = [lag.variant, lag.skjermbildeId || 'tom', lag.statuslinje, lag.statuslinjeKilde, lag.zoom, lag.panX, lag.panY,
-    lag.tiltX, lag.tiltY, lag.tiltZ, lag.persp, Math.round(pw), Math.round(ph), kvalitet].join('|');
+function telefonSnapshot(lag, m, kvalitet) {
+  const key = [lag.variant, lag.modell, lag.skjermbildeId || 'tom', lag.statuslinje, lag.statuslinjeKilde, lag.zoom, lag.panX, lag.panY,
+    lag.tiltX, lag.tiltY, lag.tiltZ, m.cfg.persp, m.cfg.plataa, Math.round(m.pw), Math.round(m.ph), kvalitet].join('|');
   if (telefonCache.has(key)) return telefonCache.get(key);
   const tex = teksturFor(lag);
-  const cfg = { tiltX: lag.tiltX, tiltY: lag.tiltY, tiltZ: lag.tiltZ, persp: lag.persp };
   const ss = kvalitet === 'fin' ? 2 : 0.85;
-  const snap = GLR.tegn(cfg, pw, ph, tex.c, tex.key, kroppsfarge(lag.variant), ss);
+  const snap = GLR.tegn(m.cfg, m.pw, m.ph, tex.c, tex.key, kroppsfarge(lag.variant), ss);
   if (!snap) return null;
   if (telefonCache.size > 24) telefonCache.delete(telefonCache.keys().next().value);
   telefonCache.set(key, snap);
@@ -2199,10 +2543,13 @@ function tegnBakgrunn(ctx, slide) {
 
 function telefonMaal(lag) {
   const F = FMT();
-  const cfg = { tiltX: lag.tiltX, tiltY: lag.tiltY, tiltZ: lag.tiltZ, persp: lag.persp };
-  const fit = fitFaktor(cfg);
+  const fit = fitFaktor(lag.persp);
   const K0 = Math.min(F.w / RAMME.w, F.h / RAMME.h);
-  return { pw: RAMME.w * K0 * lag.skala * fit, ph: RAMME.h * K0 * lag.skala * fit, cfg: cfg };
+  const pw = RAMME.w * K0 * lag.skala * fit, ph = RAMME.h * K0 * lag.skala * fit;
+  const modell = modellFor(lag);
+  const cfg = { tiltX: lag.tiltX, tiltY: lag.tiltY, tiltZ: lag.tiltZ, persp: lag.persp, plataa: modell.plataa, hull: modell.hull };
+  cfg.persp = kameraAvstand(cfg, pw, ph);
+  return { pw: pw, ph: ph, cfg: cfg };
 }
 
 function tegnTelefonSkygge(ctx, lag, cfg, pw, ph) {
@@ -2226,7 +2573,7 @@ function tegnTelefon(ctx, lag, kvalitet) {
   if (!rammerKlare) return;
   const m = telefonMaal(lag);
   if (lag.skygge > 0) tegnTelefonSkygge(ctx, lag, m.cfg, m.pw, m.ph);
-  const snap = telefonSnapshot(lag, m.pw, m.ph, kvalitet);
+  const snap = telefonSnapshot(lag, m, kvalitet);
   if (!snap) return;
   ctx.globalAlpha = lag.opasitet / 100;
   ctx.drawImage(snap.c, lag.x + snap.x0, lag.y + snap.y0, snap.w, snap.h);
@@ -2381,9 +2728,13 @@ function tegnLag(ctx, l, kvalitet) {
 // Approximate half-width of a layer - used only to skip layers
 // that fall outside the slide anyway
 function halvbredde(l) {
-  // The phone is never wider than its own frame, no matter how much it's tilted.
-  // If we compute it too wide, the tool thinks the layer is visible in slides it isn't.
-  if (l.type === 'telefon') { const m = telefonMaal(l); return m.pw * 0.6; }
+  // Perspective can make the near half of a tilted phone wider than the untilted phone,
+  // so the half-width comes from the projected bounds
+  if (l.type === 'telefon') {
+    const m = telefonMaal(l);
+    const g = telefonGrenser(m.cfg, m.pw, m.ph);
+    return Math.max(-g.x0, g.x1);
+  }
   if (l.type === 'tekst') {
     const h = oppsettFor(l).blokkH;
     return (l.rotasjon ? Math.max(l.bredde, h) : l.bredde) / 2 + l.str;
@@ -4221,6 +4572,10 @@ function bildeliste(ider) {
   return 'Bilde ' + (nr.length > 1 ? nr.slice(0, -1).join(', ') + ' og ' + nr[nr.length - 1] : nr[0]);
 }
 
+// Every model in MODELLER takes screenshots of this size. The Dynamic Island in the
+// frame only fits those.
+const MODELL_SKJERMBILDE = { w: 1206, h: 2622 };
+
 function publiseringssjekk() {
   const F = FMT();
   const funn = [];
@@ -4260,7 +4615,13 @@ function publiseringssjekk() {
           if (bilde && bilde.img && bilde.img.width < skjermbredde * 0.9) {
             funn.push({ alvor: 'advarsel', hvor: hvor, i: i, lag: l.id,
               tekst: navn + ': Skjermbildet er ' + bilde.img.width + ' px bredt, men vises ' + skjermbredde +
-                     ' px bredt. Det blir uskarpt. Ta skjermbildet på en telefon med større skjerm, eller gjør telefonen mindre.' });
+                     ' px bredt. Det blir uskarpt. Gjør telefonen mindre.' });
+          }
+          if (bilde && bilde.img && (bilde.img.width !== MODELL_SKJERMBILDE.w || bilde.img.height !== MODELL_SKJERMBILDE.h)) {
+            const modell = modellFor(l).navn;
+            funn.push({ alvor: 'advarsel', hvor: hvor, i: i, lag: l.id,
+              tekst: navn + ': Skjermbildet er ' + bilde.img.width + ' × ' + bilde.img.height + ' px, men Dynamic Island i rammen passer bare til skjermbilder fra ' +
+                     modell + ' (' + MODELL_SKJERMBILDE.w + ' × ' + MODELL_SKJERMBILDE.h + ' px). Ta skjermbildet på en ' + modell + '.' });
           }
           const st = statuslinjeStatus(l);
           if (st.feil) funn.push({ alvor: 'advarsel', hvor: hvor, i: i, lag: l.id, tekst: navn + ': ' + st.feil });
@@ -4954,7 +5315,7 @@ const FELTNAVN = {
   rotasjon: 'rotasjon', opasitet: 'synlighet', just: 'justering', plate: 'plate',
   plateFarge: 'platefarge', platePadX: 'luft i platen', platePadY: 'luft i platen',
   plateRadius: 'hjørner', plateOpasitet: 'synlighet på platen', tekstOpasitet: 'synlighet på teksten',
-  kantlinje: 'kantlinje', kantFarge: 'kantfarge', variant: 'telefonfarge', skala: 'størrelse',
+  kantlinje: 'kantlinje', kantFarge: 'kantfarge', variant: 'telefonfarge', modell: 'modell', skala: 'størrelse',
   tiltX: 'tilt', tiltY: 'tilt', tiltZ: 'tilt', persp: 'perspektiv', zoom: 'utsnitt',
   panX: 'utsnitt', panY: 'utsnitt', statuslinje: 'statuslinje', statuslinjeKilde: 'statuslinje',
   hoyde: 'høyde', beskjar: 'beskjæring',
@@ -4995,6 +5356,13 @@ function byggTelefonPanel(boks, l) {
     { label: 'Fjern', svak: true, klikk: () => endre(() => { l.skjermbildeId = null; }) }
   ]));
 
+  const modell = l.modell || '17pro';
+  boks.appendChild(el('<div style="font-size:12px;color:var(--gra);margin-top:2px">Modell</div>'));
+  boks.appendChild(segrad(Object.keys(MODELLER).map(id => ({
+    label: MODELLER[id].navn, aktiv: modell === id,
+    velg: () => endre(() => { l.modell = id; }, { struktur: true })
+  })), ['modell']));
+
   const grid = el('<div class="fargegrid"></div>');
   VARIANTER.forEach(v => {
     const b = el('<button title="' + v.hex + '"' + (l.variant === v.id ? ' class="aktiv"' : '') + '><span class="prikk" style="background:' + v.hex + '"></span>' + v.navn + '</button>');
@@ -5003,12 +5371,17 @@ function byggTelefonPanel(boks, l) {
   });
   boks.appendChild(medAlle(grid, ['variant']));
 
-  boks.appendChild(skyv('Størrelse', () => l.skala, v => { l.skala = v; }, 0.1, 1.2, 0.01, v => Math.round(v * 100) + ' %', norm.skala, ['skala']));
+  // The depth shows the distance in use: close to a large, strongly tilted phone the camera
+  // stops at its limit. Size and tilt move that limit, so their sliders refresh it too.
+  const dybdeTekst = v => Math.round(telefonMaal(Object.assign({}, l, { persp: v })).cfg.persp) + ' px';
+  const dybde = skyv('Dybde i perspektivet', () => l.persp, v => { l.persp = v; }, 900, 6000, 50, dybdeTekst, norm.persp, ['persp']);
+  const medDybde = sett => v => { sett(v); dybde.querySelector('.verdi').textContent = dybdeTekst(l.persp); };
+  boks.appendChild(skyv('Størrelse', () => l.skala, medDybde(v => { l.skala = v; }), 0.1, 1.2, 0.01, v => Math.round(v * 100) + ' %', norm.skala, ['skala']));
   boks.appendChild(el('<div style="font-size:12px;color:var(--gra);margin-top:2px">Tilt i 3D</div>'));
-  boks.appendChild(skyv('Venstre / høyre', () => l.tiltY, v => { l.tiltY = v; }, -55, 55, 1, v => v + '°', norm.tiltY, ['tiltY']));
-  boks.appendChild(skyv('Fremover / bakover', () => l.tiltX, v => { l.tiltX = v; }, -45, 45, 1, v => v + '°', norm.tiltX, ['tiltX']));
-  boks.appendChild(skyv('Skråstilling', () => l.tiltZ, v => { l.tiltZ = v; }, -35, 35, 1, v => v + '°', norm.tiltZ, ['tiltZ']));
-  boks.appendChild(skyv('Dybde i perspektivet', () => l.persp, v => { l.persp = v; }, 900, 6000, 50, v => v + ' px', norm.persp, ['persp']));
+  boks.appendChild(skyv('Venstre / høyre', () => l.tiltY, medDybde(v => { l.tiltY = v; }), -55, 55, 1, v => v + '°', norm.tiltY, ['tiltY']));
+  boks.appendChild(skyv('Fremover / bakover', () => l.tiltX, medDybde(v => { l.tiltX = v; }), -45, 45, 1, v => v + '°', norm.tiltX, ['tiltX']));
+  boks.appendChild(skyv('Skråstilling', () => l.tiltZ, medDybde(v => { l.tiltZ = v; }), -35, 35, 1, v => v + '°', norm.tiltZ, ['tiltZ']));
+  boks.appendChild(dybde);
   boks.appendChild(skyv('Skygge', () => l.skygge, v => { l.skygge = v; }, 0, 100, 1, v => v + ' %', norm.skygge, ['skygge']));
   boks.appendChild(el('<div style="font-size:12px;color:var(--gra);margin-top:2px">Utsnitt av skjermbildet</div>'));
   boks.appendChild(skyv('Zoom', () => l.zoom, v => { l.zoom = v; }, 100, 200, 1, v => v + ' %', norm.zoom, ['zoom']));
@@ -5802,6 +6175,7 @@ function kopierMerkede(klippUt) {
   });
   state.utklipp = {
     merke: UTKLIPPSMERKE,
+    versjon: state.prosjekt.versjon,   // phone sizes follow the version of the project they come from
     fraSlide: state.prosjekt.slides[state.prosjekt.aktiv] ? state.prosjekt.slides[state.prosjekt.aktiv].id : null,
     lag: JSON.parse(JSON.stringify(flokk)),
     bilder: bildekart
@@ -5838,6 +6212,8 @@ function settInnLag(pakke) {
       }
       if (sammeBilde) { k.x += 40; k.y += 40; }
       if (k.type === 'tekst') ryddUthev(k);
+      // A phone copied from a version 3 project keeps the size it had there
+      if (k.type === 'telefon' && (pakke.versjon || 0) < 4 && state.prosjekt.versjon >= 4 && kontur) k.skala *= faktorTilVersjon4(k, FMT());
       s.lag.push(k);
       nye.push(k.id);
     });
@@ -6374,6 +6750,7 @@ async function start() {
   try {
     await lastRammer();
     kontur = lagKontur();
+    if (kontur) telefonKropp = byggKropp();
     if (!kontur) feil = 'Klarte ikke å lese silhuetten ut av rammen.';
     else if (!GLR.init()) feil = 'WebGL er ikke tilgjengelig i denne nettleseren.';
     else GLR.byggGeometri();
