@@ -11,6 +11,7 @@ lokalt på Mac eller PC.
 | | |
 | --- | --- |
 | **Bruk** | [Brukerveiledning](brukerveiledning.md) |
+| **Personvern** | [PERSONVERN.md](PERSONVERN.md): Besøkstelling med GoatCounter, skrifter fra Google Fonts |
 | **Utvikling** | Ingen byggesteg og ingenting å installere. Rediger `fasade.html` og last siden på nytt |
 | **Versjon** | [Semantisk versjonering](https://semver.org/): `MAJOR.MINOR.PATCH`, i `VERSJON` i `fasade.html` og som git-tagg `vX.Y.Z` |
 | **Lisens** | MIT, se [LICENSE](LICENSE). Skriftene i `assets/fonts/` har egne OFL-lisenser |

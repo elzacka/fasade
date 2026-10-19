@@ -6783,5 +6783,10 @@ async function start() {
 
 start();
 </script>
+<script>
+  // Sends only the app's base path to GoatCounter: no query string, hash or title, nothing stored on the device.
+  if (location.hostname === 'elzacka.github.io')
+    new Image().src = 'https://elzacka.goatcounter.com/count?p=' + encodeURIComponent('/fasade/') + '&rnd=' + Math.random().toString(36).slice(2, 7)
+</script>
 </body>
 </html>
