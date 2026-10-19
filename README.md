@@ -11,7 +11,7 @@ lokalt på Mac eller PC.
 | | |
 | --- | --- |
 | **Bruk** | [Brukerveiledning](brukerveiledning.md) |
-| **Personvern** | [PERSONVERN.md](PERSONVERN.md): Besøkstelling med GoatCounter, skrifter fra Google Fonts |
+| **Personvern** | [PERSONVERN.md](PERSONVERN.md): Besøkstelling med GoatCounter |
 | **Utvikling** | Ingen byggesteg og ingenting å installere. Rediger `fasade.html` og last siden på nytt |
 | **Versjon** | [Semantisk versjonering](https://semver.org/): `MAJOR.MINOR.PATCH`, i `VERSJON` i `fasade.html` og som git-tagg `vX.Y.Z` |
 | **Lisens** | MIT, se [LICENSE](LICENSE). Skriftene i `assets/fonts/` har egne OFL-lisenser |
@@ -23,7 +23,7 @@ lokalt på Mac eller PC.
 | `fasade.html` | Hele verktøyet: CSS, markup og JavaScript |
 | `index.html` | Sender GitHub Pages videre til `fasade.html` |
 | `.nojekyll` | Får GitHub Pages til å levere filene som de er |
-| `assets/fonts/` | Exo 2 og Skranji. De andre skriftene kommer fra Google Fonts |
+| `assets/fonts/` | Exo 2 og Skranji. `google/` har de andre skriftene, kopiert fra Google Fonts |
 | `assets/mockups/` | Kilde-SVG-ene for telefonrammene. De er integrert i verktøyet |
 | `assets/screenshot.png` | Skjermbildet over |
 

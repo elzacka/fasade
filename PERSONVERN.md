@@ -1,6 +1,6 @@
 # Personvern i Fasade
 
-Sist oppdatert: 19.10.26
+Sist oppdatert: 20.10.26
 
 Fasade kjører i nettleseren din. Den har ingen innlogging og ingen server som
 tar imot det du lager.
@@ -14,12 +14,10 @@ tar imot det du lager.
 - Du sletter dataene ved å slette nettstedsdata for `elzacka.github.io` i
   nettleseren. Det sletter også dataene til andre apper på den adressen.
 
-## Nettstedet og skriftene
+## Nettstedet
 
 - Fasade ligger på GitHub Pages. GitHub får IP-adressen din når nettleseren
   henter siden, og lagrer den av sikkerhetshensyn.
-- Fasade henter de fleste skriftene fra Google Fonts. Nettleseren sender da
-  IP-adressen din og informasjon om nettleseren til Google.
 
 ## Besøksstatistikk
 

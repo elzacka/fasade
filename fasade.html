@@ -4,13 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fasade</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Fonts are loaded across their full weight range, so the difference between thin
      and bold is large enough to matter in a screenshot. -->
-<!-- Each weight is requested separately. Requesting a range (300..900) can make the browser
-     serve a single variable file, and then the canvas often draws only two weights. -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@100;300;400;500;700;800;900&family=DM+Mono:wght@300;400;500&family=Figtree:wght@300;400;500;600;700;800;900&family=Instrument+Sans:wght@400;500;600;700&family=Inter:wght@200;300;400;500;600;700;800;900&family=Open+Sans:wght@300;400;500;600;700;800&family=Manrope:wght@200;300;400;500;600;700;800&family=Nunito:wght@200;300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap">
+<!-- Each weight has its own @font-face rule in fonts.css. A single range rule (300..900)
+     often makes the canvas draw only two weights. -->
+<link rel="stylesheet" href="assets/fonts/google/fonts.css">
 <style>
 /* Exo 2 is a single variable file, but is declared with one rule per weight. This gives
    the canvas real weight instances: a range (100 900) often yields only two in practice. */
