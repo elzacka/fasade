@@ -1,6 +1,6 @@
 # Personvern i Fasade
 
-Sist oppdatert: 20.10.26
+Sist oppdatert: 02.11.26
 
 Fasade kjører i nettleseren din. Den har ingen innlogging og ingen server som
 tar imot det du lager.
@@ -18,19 +18,3 @@ tar imot det du lager.
 
 - Fasade ligger på GitHub Pages. GitHub får IP-adressen din når nettleseren
   henter siden, og lagrer den av sikkerhetshensyn.
-
-## Besøksstatistikk
-
-Appen teller besøk med GoatCounter. Tallene viser hvor mye appen blir brukt.
-
-- Appen sender bare adressen til forsiden, `/fasade/`, når du åpner appen.
-  Bildene, tekstene og annet innhold sendes ikke.
-- Appen lagrer ingenting på enheten din for å telle besøk.
-- GoatCounter bruker IP-adressen din og informasjon om nettleseren i opptil 8
-  timer for å telle deg én gang. De lagres ikke.
-- GoatCounter lagrer bare samlede tall. GoatCounter drives fra Irland og
-  lagrer tallene hos Hetzner i Finland og Tyskland.
-- Grunnlaget er berettiget interesse (personvernforordningen artikkel 6 nr. 1
-  bokstav f): Å se hvilke apper som brukes.
-- Du kan unngå tellingen ved å blokkere `goatcounter.com`, for eksempel med en
-  annonseblokkering.

@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fasade</title>
+<link rel="icon" type="image/png" sizes="16x16" href="assets/ikoner/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/ikoner/favicon-32.png">
+<link rel="icon" type="image/png" sizes="512x512" href="assets/ikoner/favicon.png">
+<link rel="apple-touch-icon" href="assets/ikoner/apple-touch-icon.png">
 <!-- Fonts are loaded across their full weight range, so the difference between thin
      and bold is large enough to matter in a screenshot. -->
 <!-- Each weight has its own @font-face rule in fonts.css. A single range rule (300..900)
@@ -286,7 +290,7 @@ select.felt { height: 30px; border: 1px solid var(--linje); border-radius: 8px; 
 .knapperad button:disabled:hover { border-color: var(--linje); }
 .knapperad button.svak { color: var(--gra); font-weight: 400; }
 .knapperad button.svak:hover { color: #9b2c2c; border-color: #e2c4c4; }
-.duorad { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+.duorad { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px 10px; }
 .tomtekst { font-size: 12px; line-height: 1.5; color: var(--gra-lys); }
 .feltrad { display: flex; align-items: center; gap: 8px; }
 .feltrad .navnelapp { flex: none; font-size: 12px; color: var(--gra); }
@@ -389,6 +393,9 @@ body.vannrett #hint { display: none; }
 #stripeytre { width: 100%; overflow-x: auto; overflow-y: hidden; padding: 2px 0 8px; }
 #striperad { display: flex; align-items: flex-start; width: max-content; }
 .stripekort { position: relative; flex: none; cursor: pointer; }
+.egenmerke { font-size: 10px; font-weight: 600; color: #8a6d1f; background: #fbf3df; border-radius: 5px; padding: 0 5px; margin-left: 4px; }
+#bildeseksjon { display: flex; flex-direction: column; gap: 2px; }
+#bildeseksjon .minknapp { align-self: flex-start; }
 .stripekort canvas { display: block; background: #eceae2; }
 .stripekort .nr {
   position: absolute; left: 6px; top: 6px; padding: 1px 6px; border-radius: 6px;
@@ -591,10 +598,12 @@ body.vannrett #hint { display: none; }
         Endringer gjelder hele serien. Vil du ha et unntak i ett bilde, sier du fra øverst i panelet. Høyreklikk gir meny. Hold Alt mens du drar for å slå av snappingen.</div>
     </div>
     <div id="panel">
+      <div id="bildeseksjon"></div>
       <div>
         <div class="seksjon">Lag</div>
         <div class="lagknapper">
           <button id="nytelefon">+ Telefon</button>
+          <button id="nymac">+ Mac</button>
           <button id="nytekst">+ Tekst</button>
           <button id="nygrafikk">+ Grafikk</button>
         </div>
@@ -647,9 +656,12 @@ body.vannrett #hint { display: none; }
 /* =============================== Foundation =============================== */
 
 const FORMATER = {
-  iphone69: { w: 1320, h: 2868, navn: 'iPhone 6,9 tommer', helt: 'iPhone 6,9 tommer - 1320 x 2868' },
-  ipad13:   { w: 2064, h: 2752, navn: 'iPad 13 tommer', helt: 'iPad 13 tommer - 2064 x 2752' }
+  iphone69: { w: 1320, h: 2868, navn: 'iPhone 6,9 tommer', helt: 'iPhone 6,9 tommer - 1320 x 2868', serie: 'ios' },
+  ipad13:   { w: 2064, h: 2752, navn: 'iPad 13 tommer', helt: 'iPad 13 tommer - 2064 x 2752', serie: 'ios' },
+  mac:      { w: 2880, h: 1800, navn: 'Mac', helt: 'Mac - 2880 x 1800', serie: 'mac' }
 };
+// Formats with the same `serie` share one series; Mac takes other screenshots than iPhone and iPad
+function serieFor(format) { return FORMATER[format].serie; }
 
 // The frame file is 880 x 1832 with the screen at 38,42 / 804 x 1748 (radius 57).
 const RAMME = { w: 880, h: 1832, sx: 38, sy: 42, sw: 804, sh: 1748, sr: 57 };
@@ -669,6 +681,28 @@ const MODELLER = {
   '18pro': { navn: 'iPhone 18 Pro', oy: 15.66, plataa: 2.78, hull: 1.53 }
 };
 function modellFor(lag) { return MODELLER[lag.modell || '17pro']; }
+
+// MacBook Air 13" (M4) seen from the front, in mm. Width and screen (13,6", 2560 x 1664, 224 ppi)
+// are Apple's specs; the notch is the safe area macOS reports, 179 x 32 of 1470 x 956 points.
+// Bezels, lid height and the base are estimated from product photos.
+const MAC = {
+  b: 304.1, lokkH: 207.5, lokkR: 9, kant: 1.1,
+  skjerm: { x: 7.25, y: 7, b: 289.6, h: 188.3, r: 2 },
+  hakk: { b: 35.27, h: 6.3, r: 1.9 },
+  hengsel: 2.2,
+  fot: { b: 319.3, h: 9, topp: 2.6, grep: 64 }     // wider than the lid: it is nearer the camera
+};
+MAC.W = MAC.fot.b;
+MAC.H = MAC.lokkH + MAC.hengsel + MAC.fot.h;
+// Full-screen screenshots have the panel's aspect at every display scaling
+const MAC_FORHOLD = 2560 / 1664;
+const MACFARGER = [
+  { id: 'himmelbla',    navn: 'Himmelblå',    hex: '#c9d7e3', lys: '#e6eef5', mork: '#8e9fae' },
+  { id: 'solv',         navn: 'Sølv',         hex: '#e3e4e6', lys: '#f6f6f7', mork: '#a5a7ab' },
+  { id: 'stjerneskinn', navn: 'Stjerneskinn', hex: '#ebe1d1', lys: '#f8f3ea', mork: '#b2a590' },
+  { id: 'midnatt',      navn: 'Midnatt',      hex: '#2e3440', lys: '#4b5262', mork: '#191d24' }
+];
+function macFarge(lag) { return MACFARGER.find(f => f.id === lag.variant) || MACFARGER[1]; }
 
 // The frames are embedded as data URIs so the tool also works when the file
 // is opened directly from Finder (file://) without a web server. Data URIs also never
@@ -701,11 +735,17 @@ const FONTER = ['Alegreya Sans', 'DM Mono', 'Exo 2', 'Figtree', 'Instrument Sans
 
 // The gap between the screenshots as the store actually shows them, measured on a
 // real product page in App Store. The corner radius is a share of the image width.
-const BUTIKKMAAL = [
-  { id: 'iphone', navn: 'iPhone', mellomrom: 4.4, hjelp: 'App Store-appen på iPhone: 10 av 229 punkter' },
-  { id: 'midt',   navn: 'Midt imellom', mellomrom: 5.8, hjelp: 'Kompromiss når serien skal se bra ut begge steder' },
-  { id: 'nett',   navn: 'Nettleser', mellomrom: 7.3, hjelp: 'Produktsiden i nettleser: 20 av 268 piksler' }
-];
+// Mac: the browser page at widths 1100 to 1920 px; the Mac App Store app is not measured.
+const BUTIKKMAAL = {
+  ios: [
+    { id: 'iphone', navn: 'iPhone', mellomrom: 4.4, hjelp: 'App Store-appen på iPhone: 10 av 229 punkter' },
+    { id: 'midt',   navn: 'Midt imellom', mellomrom: 5.8, hjelp: 'Kompromiss når serien skal se bra ut begge steder' },
+    { id: 'nett',   navn: 'Nettleser', mellomrom: 7.3, hjelp: 'Produktsiden i nettleser: 20 av 268 piksler' }
+  ],
+  mac: [
+    { id: 'nett',   navn: 'Nettleser', mellomrom: 4.5, hjelp: 'Produktsiden i nettleser: 20 av 370 til 540 piksler' }
+  ]
+};
 const HJORNE = 0.045;      // the rounding of the screenshots in the store
 
 // App Store Connect accepts no alpha channel. Exports are flattened onto this
@@ -713,7 +753,7 @@ const HJORNE = 0.045;      // the rounding of the screenshots in the store
 const EKSPORTGRUNN = '#ffffff';
 
 // Semantic version (MAJOR.MINOR.PATCH); the README says when each part goes up
-const VERSJON = '1.3.0';
+const VERSJON = '1.4.0';
 
 // Shortcut labels: ⌘ and ⇧ on a Mac, Ctrl+ and Skift+ elsewhere
 const ER_MAC = !!navigator.platform && /Mac/i.test(navigator.platform);
@@ -784,6 +824,25 @@ function nyttTelefonlag(over) {
   }, over || {});
 }
 
+function nyttMaclag(over) {
+  return Object.assign({
+    id: uid(), type: 'mac', navn: 'Mac', synlig: true,
+    x: 0, y: 0, spenn: false, gruppe: null,
+    rolleId: null, avvik: {},
+    skala: 0.6, opasitet: 100,
+    variant: 'solv',                  // an id in MACFARGER
+    skjermbildeId: null,
+    skygge: 45,
+    zoom: 100, panX: 0, panY: 0
+  }, over || {});
+}
+
+// The layer that holds the screenshot: an iPhone, or a Mac in the Mac format
+function erEnhet(l) { return l.type === 'telefon' || l.type === 'mac'; }
+function nyEnhet(over) {
+  return serieFor(state.prosjekt.format) === 'mac' ? nyttMaclag(over) : nyttTelefonlag(over);
+}
+
 function nyttTekstlag(over) {
   return Object.assign({
     id: uid(), type: 'tekst', navn: 'Tekst', synlig: true,
@@ -838,7 +897,7 @@ function nyttGrafikklag(over) {
 
 // Fields that belong to the image, not the template
 const LOKALE_FELT = ['id', 'rolleId', 'avvik', 'tekst', 'uthev', 'skjermbildeId', 'bildeId',
-  'gruppe', 'navn', 'synlig'];
+  'gruppe', 'folgerId', 'navn', 'synlig'];
 
 function malFelt(l) {
   const o = {};
@@ -852,6 +911,7 @@ function nyRolle(lag) {
 
 function nyttLag(type, over) {
   if (type === 'telefon') return nyttTelefonlag(over);
+  if (type === 'mac') return nyttMaclag(over);
   if (type === 'tekst') return nyttTekstlag(over);
   return nyttGrafikklag(over);
 }
@@ -875,6 +935,20 @@ function rollen(rolleId) {
 function nyMal(format) {
   const F = FORMATER[format];
   const midtX = F.w / 2;
+  if (F.serie === 'mac') {
+    // The whole Mac under the text, with the default 7 % margin below it
+    const marg = Math.round(F.w * 0.07), topp = 530;
+    const skala = Math.floor((F.h - topp - marg) / (MAC.H * macFaktor(F)) * 1000) / 1000;
+    return {
+      bakgrunn: nyBakgrunn(),
+      roller: [
+        nyRolle(nyttMaclag({ x: midtX, y: (topp + F.h - marg) / 2, skala: skala })),
+        // Text is placed by its top (see tekstMidtY)
+        nyRolle(nyttTekstlag({ navn: 'Undertekst', str: 60, vekt: 500, y: marg + 200, x: midtX, bredde: 2200 })),
+        nyRolle(nyttTekstlag({ navn: 'Overskrift', str: 120, x: midtX, y: marg + 16, bredde: 2200 }))
+      ]
+    };
+  }
   // A large phone that starts under the subtitle and runs off the bottom edge.
   // The height leaves out the fit factor, which makes the phone a few per cent
   // smaller, so the top lands a little lower than 760. The width keeps the side
@@ -885,8 +959,9 @@ function nyMal(format) {
     bakgrunn: nyBakgrunn(),
     roller: [
       nyRolle(nyttTelefonlag({ x: midtX, y: 760 + hoyde / 2, skala: skala })),
-      nyRolle(nyttTekstlag({ navn: 'Undertekst', str: 56, vekt: 500, y: 620, x: midtX })),
-      nyRolle(nyttTekstlag({ navn: 'Overskrift', x: midtX, y: 360 }))
+      // Text is placed by its top (see tekstMidtY)
+      nyRolle(nyttTekstlag({ navn: 'Undertekst', str: 56, vekt: 500, y: 592, x: midtX })),
+      nyRolle(nyttTekstlag({ navn: 'Overskrift', x: midtX, y: 234 }))
     ]
   };
 }
@@ -907,6 +982,7 @@ function nySlide(format) {
 const state = {
   prosjekt: {
     versjon: 4,
+    tekstTopp: true,     // text layers are placed by their top, not their center (see tilTekstTopp)
     format: 'iphone69',
     appnavn: 'app',
     aktiv: 0,
@@ -917,6 +993,7 @@ const state = {
     mellomrom: 4.4,
     mal: null,           // shared look for the whole series
     formatminne: {},     // the layout in each format, so you can switch back and forth
+    serier: {},          // the series of the other device, by FORMATER[].serie, while it is put aside
     slides: []
   },
   valgtLag: null,        // layer id or 'bakgrunn' or null - the thing that controls the panel
@@ -929,6 +1006,8 @@ const state = {
   storHoyde: 620,        // the height in the large view
   storHvor: 'produkt',   // 'produkt' or 'sok' in the large view
   somModus: false,       // show the neighboring images around the canvas while you work
+  somOmfang: 'kant',     // 'kant' a strip of each neighbor, 'naboer' both neighbors whole, 'alle' the whole series
+  somSvev: -1,           // the neighboring slide under the pointer, or -1
   utklipp: null,         // layer that has been copied
   malmodus: 'serie',     // 'serie', 'utvalg' or 'bilde' - where changes apply
   malUtvalg: [],         // the image ids when malmodus is 'utvalg'
@@ -990,9 +1069,20 @@ function byggMalFraProsjekt(p) {
 // Everything read in goes through this, so the rest of the code can always
 // rely on the fields being present - even in projects that don't set every field.
 function normaliserProsjekt(p) {
+  if (!p.formatminne || typeof p.formatminne !== 'object') p.formatminne = {};
+  if (!p.serier || typeof p.serier !== 'object') p.serier = {};
+  normaliserSerie(p);
+  Object.values(p.serier).forEach(normaliserSerie);
+  // Needs the silhouette; without it the phones cannot be drawn, and the project converts later
+  if ((p.versjon || 0) < 4 && kontur) tilVersjon4(p);
+  if (!p.tekstTopp) tilTekstTopp(p);
+  return p;
+}
+
+// The project, or a series put aside for another device in `serier`
+function normaliserSerie(p) {
   if (typeof p.mellomrom !== 'number' || !isFinite(p.mellomrom)) p.mellomrom = 4.4;
   p.mellomrom = klem(p.mellomrom, 0, 14);
-  if (!p.formatminne || typeof p.formatminne !== 'object') p.formatminne = {};
   (p.slides || []).forEach(s => {
     if (s.bakgrunn) {
       if (typeof s.bakgrunn.spenn !== 'boolean') s.bakgrunn.spenn = false;
@@ -1005,6 +1095,7 @@ function normaliserProsjekt(p) {
       if (!l.avvik) l.avvik = {};
       if (l.type === 'telefon' && !l.statuslinje) { l.statuslinje = 'behold'; l.statuslinjeKilde = null; }
       if (l.type === 'telefon' && !MODELLER[l.modell]) l.modell = '17pro';
+      if (l.type === 'mac') l.variant = macFarge(l).id;
       if (l.type !== 'tekst') return;
       const nt = nyttTekstlag();
       ['platePadX', 'platePadY', 'plateRadius', 'plateOpasitet', 'tekstOpasitet'].forEach(f => {
@@ -1018,10 +1109,54 @@ function normaliserProsjekt(p) {
   if (p.mal) p.mal.roller.forEach(r => {
     if (r.type === 'telefon' && !r.felt.statuslinje) { r.felt.statuslinje = 'behold'; r.felt.statuslinjeKilde = null; }
     if (r.type === 'telefon' && !MODELLER[r.felt.modell]) r.felt.modell = '17pro';
+    if (r.type === 'mac') r.felt.variant = macFarge(r.felt).id;
   });
-  // Needs the silhouette; without it the phones cannot be drawn, and the project converts later
-  if ((p.versjon || 0) < 4 && kontur) tilVersjon4(p);
-  return p;
+}
+
+/* Text used to be placed by its center, so a text that wrapped onto another line grew
+   upward as well as downward. Now `y` is the top of the text. Each layer keeps its look,
+   except that layers following the template now share the template's top - which
+   is the point: the same Y gives the same top, however many lines the text has.
+   Groups get their stacking from the positions as they were. */
+function tilTekstTopp(p) {
+  const hoyde = (l, g) => tekstOppsett(g ? Object.assign({}, l, g) : l).blokkH;
+  const alle = [];
+  (p.slides || []).forEach(s => (s.lag || []).forEach(l => { if (l.type === 'tekst') alle.push({ s: s, l: l }); }));
+  // The template's top: from the first layer in the series that follows the template's position
+  const rolleTopp = {};
+  if (p.mal) p.mal.roller.forEach(r => {
+    if (r.type !== 'tekst' || typeof r.felt.y !== 'number') return;
+    const f = alle.find(k => k.l.rolleId === r.id && !k.s.egen && !(k.l.avvik && k.l.avvik.y));
+    const hh = f ? hoyde(f.l) : hoyde(Object.assign(nyttTekstlag(), r.felt));
+    rolleTopp[r.id] = Math.round(r.felt.y - hh / 2);
+  });
+  // Other formats remember their own positions
+  Object.values(p.formatminne || {}).forEach(minne => {
+    if (!minne || !minne.lag) return;
+    alle.forEach(k => {
+      const g = minne.lag[k.l.id];
+      if (g && typeof g.y === 'number') g.y = Math.round(g.y - hoyde(k.l, g) / 2);
+    });
+    if (minne.mal && minne.mal.roller) minne.mal.roller.forEach(r => {
+      if (r.type !== 'tekst' || typeof r.felt.y !== 'number') return;
+      const f = alle.find(k => k.l.rolleId === r.id);
+      r.felt.y = Math.round(r.felt.y - (f ? hoyde(f.l, minne.lag[f.l.id]) : r.felt.str || 0) / 2);
+    });
+  });
+  // Each layer by itself first, with the look unchanged, so groups can read their gaps
+  alle.forEach(k => { k.l.y = Math.round(k.l.y - hoyde(k.l) / 2); });
+  (p.slides || []).forEach(s => {
+    const grupper = new Set((s.lag || []).map(l => l.gruppe).filter(Boolean));
+    grupper.forEach(gid => kjedGruppe(s, gid));
+  });
+  // Then the shared top for the layers that follow the template
+  alle.forEach(k => {
+    const t = rolleTopp[k.l.rolleId];
+    if (t !== undefined && !k.s.egen && !(k.l.avvik && k.l.avvik.y)) k.l.y = t;
+  });
+  if (p.mal) p.mal.roller.forEach(r => { if (rolleTopp[r.id] !== undefined) r.felt.y = rolleTopp[r.id]; });
+  (p.slides || []).forEach(flytGrupper);
+  p.tekstTopp = true;
 }
 
 function FMT() { return FORMATER[state.prosjekt.format]; }
@@ -1119,8 +1254,25 @@ function grupper() {
   const flokk = merkedeLag();
   if (flokk.length < 2) { setStatus('Merk minst to lag for å gruppere'); return; }
   const gid = uid();
-  endre(() => { flokk.forEach(l => { l.gruppe = gid; }); }, { struktur: true, tving: true });
-  setStatus(flokk.length + ' lag er gruppert');
+  let andre = 0;
+  endre(() => {
+    flokk.forEach(l => { l.gruppe = gid; });
+    kjedGruppe(aktivSlide(), gid);
+    // The same layers are grouped in the slides that follow, with the same stacking
+    malBilder().forEach(s2 => {
+      const tilsv = flokk.map(l => l.rolleId ? s2.lag.find(x => x.rolleId === l.rolleId) : null);
+      if (tilsv.some(m => !m)) return;
+      const g2 = uid();
+      tilsv.forEach((m, i) => {
+        m.gruppe = g2;
+        delete m.folgerId;
+        const ref = flokk.findIndex(o => o.id === flokk[i].folgerId);
+        if (ref >= 0) { m.folgerId = tilsv[ref].id; m.luftOver = flokk[i].luftOver; }
+      });
+      andre++;
+    });
+  }, { struktur: true, tving: true });
+  setStatus(flokk.length + ' lag er gruppert' + (andre ? ', også i ' + andre + (andre === 1 ? ' bilde til' : ' bilder til') : ''));
 }
 
 function losOppGruppe() {
@@ -1128,7 +1280,17 @@ function losOppGruppe() {
   if (!flokk.length) { setStatus('Ingen gruppe å løse opp'); return; }
   const ider = new Set(flokk.map(l => l.gruppe));
   const s = aktivSlide();
-  endre(() => { s.lag.forEach(l => { if (ider.has(l.gruppe)) l.gruppe = null; }); }, { struktur: true, tving: true });
+  const roller = new Set(s.lag.filter(l => ider.has(l.gruppe) && l.rolleId).map(l => l.rolleId));
+  endre(() => {
+    s.lag.forEach(l => { if (ider.has(l.gruppe)) { l.gruppe = null; delete l.folgerId; } });
+    // The same group goes in the slides that follow
+    malBilder().forEach(s2 => s2.lag.forEach(m => {
+      if (m.gruppe && roller.has(m.rolleId)) {
+        const g = m.gruppe;
+        s2.lag.forEach(x => { if (x.gruppe === g) { x.gruppe = null; delete x.folgerId; } });
+      }
+    }));
+  }, { struktur: true, tving: true });
   setStatus('Gruppen er løst opp');
 }
 
@@ -1219,7 +1381,8 @@ async function idbSlett(nokkel) {
 
 function brukteBildeIder() {
   const ider = new Set();
-  state.prosjekt.slides.forEach(s => {
+  const p = state.prosjekt;
+  p.slides.concat(...Object.values(p.serier || {}).map(se => se.slides)).forEach(s => {
     if (s.bakgrunn.bildeId) ider.add(s.bakgrunn.bildeId);
     s.lag.forEach(l => {
       if (l.skjermbildeId) ider.add(l.skjermbildeId);
@@ -2232,6 +2395,155 @@ function telefonSnapshot(lag, m, kvalitet) {
   return snap;
 }
 
+/* =============================== MacBook Air =============================== */
+
+// Pixels per mm for a Mac at scale 1: the whole Mac fills the format's width or height
+function macFaktor(F) { return Math.min(F.w / MAC.W, F.h / MAC.H); }
+
+function macMaal(lag) {
+  const mm = macFaktor(FMT()) * lag.skala;
+  return { mm: mm, pw: MAC.W * mm, ph: MAC.H * mm };
+}
+
+// A rectangle with its own radius in each corner: top left, top right, bottom right, bottom left
+function hjorneRekt(x, rx, ry, w, h, r) {
+  x.beginPath();
+  x.moveTo(rx + r[0], ry);
+  x.arcTo(rx + w, ry, rx + w, ry + h, r[1]);
+  x.arcTo(rx + w, ry + h, rx, ry + h, r[2]);
+  x.arcTo(rx, ry + h, rx, ry, r[3]);
+  x.arcTo(rx, ry, rx + w, ry, r[0]);
+  x.closePath();
+}
+
+// The Mac drawn flat in mm, with the lid's top left corner at 0,0 and the base centred under it
+function tegnMacKropp(x, lag) {
+  const f = macFarge(lag);
+  const ut = (MAC.W - MAC.b) / 2;
+  const S = MAC.skjerm, N = MAC.hakk;
+  const loddrett = (y0, y1, stopp) => {
+    const g = x.createLinearGradient(0, y0, 0, y1);
+    stopp.forEach(st => g.addColorStop(st[0], st[1]));
+    return g;
+  };
+  x.save();
+  x.translate(ut, 0);
+
+  // Lid: an aluminium rim around black glass
+  hjorneRekt(x, 0, 0, MAC.b, MAC.lokkH, [MAC.lokkR, MAC.lokkR, 2, 2]);
+  x.fillStyle = loddrett(0, MAC.lokkH, [[0, f.lys], [0.5, f.hex], [1, f.mork]]);
+  x.fill();
+  const k = MAC.kant;
+  hjorneRekt(x, k, k, MAC.b - 2 * k, MAC.lokkH - 2 * k, [MAC.lokkR - k, MAC.lokkR - k, 1, 1]);
+  x.fillStyle = '#0b0b0d';
+  x.fill();
+
+  // Screen, rounded at the top only, with the screenshot filling it
+  x.save();
+  hjorneRekt(x, S.x, S.y, S.b, S.h, [S.r, S.r, 0, 0]);
+  x.clip();
+  const skjerm = lag.skjermbildeId ? bilder.get(lag.skjermbildeId) : null;
+  if (skjerm && skjerm.img) {
+    const img = skjerm.img;
+    const s = Math.max(S.b / img.width, S.h / img.height) * (lag.zoom / 100);
+    const w = img.width * s, h = img.height * s;
+    x.imageSmoothingQuality = 'high';
+    x.drawImage(img, S.x + (S.b - w) / 2 - (lag.panX / 100) * (w - S.b) / 2,
+      S.y + (S.h - h) / 2 - (lag.panY / 100) * (h - S.h) / 2, w, h);
+  } else {
+    x.fillStyle = '#eceae2';
+    x.fillRect(S.x, S.y, S.b, S.h);
+    x.fillStyle = '#a9a79d';
+    x.font = "600 12px 'Figtree', sans-serif";
+    x.textAlign = 'center';
+    x.textBaseline = 'middle';
+    x.fillText('Velg skjermbilde', S.x + S.b / 2, S.y + S.h / 2);
+  }
+  x.restore();
+
+  // The notch, with small fillets where it meets the bezel, and the camera in it
+  const nx = S.x + (S.b - N.b) / 2, fl = 0.8;
+  x.beginPath();
+  x.moveTo(nx - fl, S.y);
+  x.arcTo(nx, S.y, nx, S.y + fl, fl);
+  x.arcTo(nx, S.y + N.h, nx + N.r, S.y + N.h, N.r);
+  x.arcTo(nx + N.b, S.y + N.h, nx + N.b, S.y + N.h - N.r, N.r);
+  x.arcTo(nx + N.b, S.y, nx + N.b + fl, S.y, fl);
+  x.lineTo(nx + N.b + fl, S.y - 0.5);
+  x.lineTo(nx - fl, S.y - 0.5);
+  x.closePath();
+  x.fillStyle = '#0b0b0d';
+  x.fill();
+  const kx = S.x + S.b / 2, ky = S.y + N.h * 0.45;
+  x.fillStyle = '#16181d';
+  x.beginPath(); x.arc(kx, ky, 1.1, 0, Math.PI * 2); x.fill();
+  x.fillStyle = '#0f1a2b';
+  x.beginPath(); x.arc(kx, ky, 0.5, 0, Math.PI * 2); x.fill();
+  x.fillStyle = 'rgba(120,150,200,.45)';
+  x.beginPath(); x.arc(kx - 0.18, ky - 0.18, 0.15, 0, Math.PI * 2); x.fill();
+
+  // Hinge
+  const hy = MAC.lokkH;
+  x.fillStyle = loddrett(hy, hy + MAC.hengsel, [[0, '#0d0d0f'], [1, '#2a2b2e']]);
+  x.fillRect(MAC.b * 0.07, hy - 0.2, MAC.b * 0.86, MAC.hengsel + 0.4);
+  x.restore();
+
+  // Base: the top surface catches the light, the front edge falls into shadow, a scoop in the middle
+  const by = MAC.lokkH + MAC.hengsel, B = MAC.fot;
+  hjorneRekt(x, 0, by, B.b, B.h, [1.4, 1.4, 3.5, 3.5]);
+  x.fillStyle = loddrett(by, by + B.h, [[0, f.lys], [B.topp / B.h, f.hex], [B.topp / B.h + 0.02, f.mork],
+    [0.35, f.hex], [1, f.mork]]);
+  x.fill();
+  const gx = (B.b - B.grep) / 2;
+  x.beginPath();
+  x.moveTo(gx, by);
+  x.bezierCurveTo(gx + 6, by, gx + 5, by + 1.9, gx + 12, by + 1.9);
+  x.lineTo(gx + B.grep - 12, by + 1.9);
+  x.bezierCurveTo(gx + B.grep - 5, by + 1.9, gx + B.grep - 6, by, gx + B.grep, by);
+  x.closePath();
+  x.fillStyle = loddrett(by, by + 1.9, [[0, f.mork], [1, f.hex]]);
+  x.fill();
+}
+
+const macCache = new Map();   // key -> canvas with the Mac at its size on the slide
+function macSnapshot(lag, m, kvalitet) {
+  const ss = kvalitet === 'fin' ? 1 : 0.6;
+  const key = [lag.variant, lag.skjermbildeId || 'tom', lag.zoom, lag.panX, lag.panY, Math.round(m.pw), ss].join('|');
+  if (macCache.has(key)) return macCache.get(key);
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.ceil(m.pw * ss)); c.height = Math.max(1, Math.ceil(m.ph * ss));
+  const x = c.getContext('2d');
+  x.scale(m.mm * ss, m.mm * ss);
+  tegnMacKropp(x, lag);
+  if (macCache.size > 12) macCache.delete(macCache.keys().next().value);
+  macCache.set(key, c);
+  return c;
+}
+
+function tegnMac(ctx, lag, kvalitet) {
+  const m = macMaal(lag);
+  const x0 = lag.x - m.pw / 2, y0 = lag.y - m.ph / 2;
+  ctx.globalAlpha = lag.opasitet / 100;
+  if (lag.skygge > 0) {
+    // A soft shadow behind the lid and a tight one where the base meets the ground
+    const s = lag.skygge / 100;
+    ctx.save();
+    ctx.fillStyle = '#0d0f0c';
+    ctx.filter = 'blur(' + Math.round(m.mm * 9 * s + 4) + 'px)';
+    ctx.globalAlpha *= Math.min(0.5, s * 0.55);
+    ctx.fillRect(x0 + m.pw * 0.06, y0 + m.ph * 0.06, m.pw * 0.88, m.ph * 0.96);
+    ctx.filter = 'blur(' + Math.round(m.mm * 1.6 + 2) + 'px)';
+    ctx.globalAlpha = (lag.opasitet / 100) * Math.min(0.75, s * 0.9);
+    ctx.beginPath();
+    ctx.ellipse(lag.x, y0 + m.ph - m.mm * 0.4, m.pw * 0.49, m.mm * 2.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.drawImage(macSnapshot(lag, m, kvalitet), x0, y0, m.pw, m.ph);
+  ctx.globalAlpha = 1;
+  settHitboks(lag.id, { x: x0, y: y0, w: m.pw, h: m.ph, cx: lag.x, cy: lag.y, rot: 0 });
+}
+
 /* =============================== Drawing a complete slide =============================== */
 
 const hitboks = new Map();   // lag-id -> {x,y,w,h,cx,cy,rot}
@@ -2588,12 +2900,75 @@ function nullstillSkygge(ctx) {
   ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 }
 
+/* Text is placed by its top: `y` is the top of the first line, so a text that wraps
+   grows downward and stays where you put it. The layout itself is still measured
+   around the block's center, which is what this gives. */
+function tekstMidtY(l) { return l.y + oppsettFor(l).blokkH / 2; }
+function ankerY(l) { return l.type === 'tekst' ? tekstMidtY(l) : l.y; }
+
+/* ------- Stacked groups -------
+
+   In a group, a layer that sits under another one follows it: it keeps the same gap
+   (`luftOver`) below the layer above (`folgerId`). When the headline wraps onto another
+   line, the subtitle moves down with it instead of being covered. Move the subtitle on
+   its own, and the gap is what changes. */
+function toppAv(l) { if (l.type === 'tekst') return l.y; const b = beregnetBoks(l); return b ? b.y : l.y; }
+function bunnAv(l) { if (l.type === 'tekst') return l.y + oppsettFor(l).blokkH; const b = beregnetBoks(l); return b ? b.y + b.h : l.y; }
+
+// Works out who follows whom in a group, from where the layers sit now
+function kjedGruppe(s, gid) {
+  const med = s.lag.filter(l => l.gruppe === gid);
+  med.forEach(l => { delete l.folgerId; });
+  const spenn = l => { const b = beregnetBoks(l); return b ? [b.x, b.x + b.w] : [l.x, l.x]; };
+  const sortert = med.slice().sort((a, b) => toppAv(a) - toppAv(b));
+  sortert.forEach((l, i) => {
+    const [v, h] = spenn(l);
+    // The nearest layer above that overlaps sideways
+    const over = sortert.slice(0, i).filter(o => { const [v2, h2] = spenn(o); return h2 > v && v2 < h; });
+    if (!over.length) return;
+    const ref = over[over.length - 1];
+    l.folgerId = ref.id;
+    l.luftOver = Math.round(toppAv(l) - bunnAv(ref));
+  });
+}
+
+// Puts the followers in place. Runs before each drawing, so it also holds after a text edit.
+function flytGrupper(s) {
+  if (!s || !s.lag) return;
+  const etterId = new Map(s.lag.map(l => [l.id, l]));
+  for (let runde = 0; runde < 8; runde++) {
+    let endret = false;
+    s.lag.forEach(l => {
+      if (!l.folgerId) return;
+      const ref = etterId.get(l.folgerId);
+      if (!ref || !l.gruppe || ref.gruppe !== l.gruppe || ref === l) { delete l.folgerId; return; }
+      const d = Math.round(bunnAv(ref) + (l.luftOver || 0) - toppAv(l));
+      if (d) { l.y += d; endret = true; }
+    });
+    if (!endret) break;
+  }
+}
+
+// After you move layers yourself: a follower that moved without the one it follows gets a new gap
+function oppdaterLuft(lagene) {
+  const s = aktivSlide();
+  if (!s) return;
+  const flyttet = new Set(lagene);
+  lagene.forEach(l => {
+    if (!l.folgerId) return;
+    const ref = s.lag.find(x => x.id === l.folgerId);
+    if (!ref || flyttet.has(ref)) return;
+    l.luftOver = Math.round(toppAv(l) - bunnAv(ref));
+  });
+}
+
 function tegnTekst(ctx, lag) {
   const O = oppsettFor(lag);
   const blokkH = O.blokkH;
   ctx.save();
   if ('letterSpacing' in ctx) ctx.letterSpacing = (lag.sperr || 0) + 'px';
-  ctx.translate(lag.x, lag.y);
+  const midtY = lag.y + blokkH / 2;
+  ctx.translate(lag.x, midtY);
   ctx.rotate((lag.rotasjon || 0) * Math.PI / 180);
   ctx.globalAlpha = lag.opasitet / 100;
   ctx.textBaseline = 'alphabetic';
@@ -2663,11 +3038,12 @@ function tegnTekst(ctx, lag) {
   const padX = (plate === 'fylt' || kant) ? lag.str * (lag.platePadX === undefined ? 55 : lag.platePadX) / 100 : 0;
   const padY = (plate === 'fylt' || kant) ? lag.str * (lag.platePadY === undefined ? 38 : lag.platePadY) / 100 : 0;
   const bw = Math.max(lag.bredde, O.maksB + padX * 2);
-  const bh = Math.max(blokkH + lag.str * 0.24, blokkH + padY * 2);
+  // The box follows the text block exactly, so its top is Y and the distances you see are the real ones
+  const bh = blokkH + padY * 2;
   settHitboks(lag.id, {
-    x: lag.x - bw / 2, y: lag.y - bh / 2,
+    x: lag.x - bw / 2, y: midtY - bh / 2,
     w: bw, h: bh,
-    cx: lag.x, cy: lag.y, rot: (lag.rotasjon || 0) * Math.PI / 180
+    cx: lag.x, cy: midtY, ay: lag.y, rot: (lag.rotasjon || 0) * Math.PI / 180
   });
 }
 
@@ -2719,6 +3095,7 @@ function tegnGrafikk(ctx, lag) {
 
 function tegnLag(ctx, l, kvalitet) {
   if (l.type === 'telefon') tegnTelefon(ctx, l, kvalitet);
+  else if (l.type === 'mac') tegnMac(ctx, l, kvalitet);
   else if (l.type === 'tekst') tegnTekst(ctx, l);
   else if (l.type === 'grafikk') tegnGrafikk(ctx, l);
 }
@@ -2733,6 +3110,7 @@ function halvbredde(l) {
     const g = telefonGrenser(m.cfg, m.pw, m.ph);
     return Math.max(-g.x0, g.x1);
   }
+  if (l.type === 'mac') return macMaal(l).pw / 2;
   if (l.type === 'tekst') {
     const h = oppsettFor(l).blokkH;
     return (l.rotasjon ? Math.max(l.bredde, h) : l.bredde) / 2 + l.str;
@@ -2771,6 +3149,7 @@ function nabolag(slide) {
 
 function renderSlide(ctx, slide, kvalitet) {
   const F = FMT();
+  flytGrupper(slide);
   ctx.filter = 'none'; ctx.globalAlpha = 1;
   ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
   tegnBakgrunn(ctx, slide);
@@ -2903,7 +3282,7 @@ function redigertLag() {
 
 function lokaltPunkt(l, p) {
   const rot = -(l.rotasjon || 0) * Math.PI / 180;
-  const dx = p.x - l.x, dy = p.y - l.y;
+  const dx = p.x - l.x, dy = p.y - ankerY(l);
   return { x: dx * Math.cos(rot) - dy * Math.sin(rot), y: dx * Math.sin(rot) + dy * Math.cos(rot) };
 }
 
@@ -2974,7 +3353,7 @@ function tegnTekstredigering(ctx) {
   const r = state.rediger;
   const fra = Math.min(r.fra, r.til), til = Math.max(r.fra, r.til);
   ctx.save();
-  ctx.translate(l.x, l.y);
+  ctx.translate(l.x, ankerY(l));
   ctx.rotate((l.rotasjon || 0) * Math.PI / 180);
 
   // Faint frame showing how far the text can go before it wraps
@@ -3277,7 +3656,7 @@ window.addEventListener('resize', () => { if (state.rediger) oppdaterTekstverkto
 function lerretTilSkjerm(x, y) {
   const r = lerret.getBoundingClientRect();
   return {
-    x: r.left + (x + kikkBredde()) * r.width / lerret.width,
+    x: r.left + (x + kikkSider().v) * r.width / lerret.width,
     y: r.top + y * r.height / lerret.height
   };
 }
@@ -3312,7 +3691,7 @@ function oppdaterTekstverktoy() {
   const lx = xForIndeks(l, L, fra), ly = L.base - L.str * 1.1;
   const rot = (l.rotasjon || 0) * Math.PI / 180;
   const px = l.x + lx * Math.cos(rot) - ly * Math.sin(rot);
-  const py = l.y + lx * Math.sin(rot) + ly * Math.cos(rot);
+  const py = ankerY(l) + lx * Math.sin(rot) + ly * Math.cos(rot);
   const sk = lerretTilSkjerm(px, py);
   tekstverktoy.classList.add('vis');
   const b = tekstverktoy.getBoundingClientRect();
@@ -3401,7 +3780,7 @@ function avstandsmaal(flokk) {
 
 function tegnAvstandsmaal(ctx) {
   const m = state._maal;
-  if (!m || !drag) return;
+  if (!m || (!drag && !(state._maalTil > Date.now()))) return;
   const F = FMT();
   const tykk = Math.max(2, F.w / 620);
   const skrift = Math.round(F.w / 46);
@@ -3544,8 +3923,8 @@ function tegnRutenett(ctx) {
 // first. Used for layers in slides that aren't shown on the canvas right now.
 function beregnetBoks(l) {
   let w, h;
-  if (l.type === 'telefon') { const m = telefonMaal(l); w = m.pw; h = m.ph; }
-  else if (l.type === 'tekst') { const O = oppsettFor(l); w = l.bredde; h = O.blokkH + l.str * 0.24; }
+  if (l.type === 'telefon' || l.type === 'mac') { const m = l.type === 'mac' ? macMaal(l) : telefonMaal(l); w = m.pw; h = m.ph; }
+  else if (l.type === 'tekst') { const O = oppsettFor(l); w = l.bredde; h = O.blokkH; }
   else {
     const b = l.bildeId ? bilder.get(l.bildeId) : null;
     const be = l.beskjar || { t: 0, h: 0, b: 0, v: 0 };
@@ -3557,7 +3936,8 @@ function beregnetBoks(l) {
     }
     h = l.hoyde; w = l.hoyde * forhold;
   }
-  return { x: l.x - w / 2, y: l.y - h / 2, w: w, h: h, cx: l.x, cy: l.y, rot: (l.rotasjon || 0) * Math.PI / 180 };
+  const cy = ankerY(l);
+  return { x: l.x - w / 2, y: cy - h / 2, w: w, h: h, cx: l.x, cy: cy, ay: l.y, rot: (l.rotasjon || 0) * Math.PI / 180 };
 }
 
 // The box around a layer in canvas coordinates, rotation included.
@@ -3565,10 +3945,12 @@ function beregnetBoks(l) {
 // if the layer has moved since, the box is recomputed.
 function boksFor(l) {
   let h = hitboks.get(l.id);
-  if (h && (h.cx !== l.x || h.cy !== l.y)) {
+  // `ay` is the layer's own y when that isn't the center (text is placed by its top)
+  const ay = h ? (h.ay !== undefined ? h.ay : h.cy) : 0;
+  if (h && (h.cx !== l.x || ay !== l.y)) {
     // The layer has moved since it was drawn: use the real shape, but at the new position
-    const dx = l.x - h.cx, dy = l.y - h.cy;
-    h = { x: h.x + dx, y: h.y + dy, w: h.w, h: h.h, cx: l.x, cy: l.y, rot: h.rot };
+    const dx = l.x - h.cx, dy = l.y - ay;
+    h = { x: h.x + dx, y: h.y + dy, w: h.w, h: h.h, cx: l.x, cy: h.cy + dy, ay: l.y, rot: h.rot };
   }
   if (!h) h = beregnetBoks(l);
   if (!h) return null;
@@ -3586,7 +3968,7 @@ function snappTerskel() {
 
 // The targets to snap to. `pri` decides which one wins when two targets are
 // equally near: the center of the slide first, then other layers, then the safe zone.
-function snappMaal(utenId) {
+function snappMaal(utenom) {
   const F = FMT();
   const s = aktivSlide();
   const trygg = Math.round(F.w * state.rutenett.tryggMarg / 100);
@@ -3603,7 +3985,7 @@ function snappMaal(utenId) {
     L.y.forEach(v => Y.push({ v: v, pri: 1, navn: 'Støttelinje' }));
   }
   if (s) s.lag.forEach(l => {
-    if (!l.synlig || l.id === utenId) return;
+    if (!l.synlig || utenom.indexOf(l) >= 0) return;
     const b = boksFor(l);
     if (!b) return;
     const navn = l.navn || LAGTYPENAVN[l.type];
@@ -3620,11 +4002,47 @@ function boksAvstand(l) {
   return { v: b.v - l.x, cx: b.cx - l.x, h: b.h - l.x, t: b.t - l.y, cy: b.cy - l.y, b: b.b - l.y };
 }
 
+/* Equal spacing: the place where the gap to the nearest thing above is as large
+   as the gap to the nearest thing below (and the same left and right). With nothing
+   on one side, the slide edge counts. Gap equal on both sides means the box center
+   sits midway between the two, so that midpoint is a snap target like any other. */
+function likAvstandMaal(meg, utenom) {
+  const F = FMT();
+  const naboer = naboBokser(utenom);
+  const ut = { X: [], Y: [] };
+  const loddrett = naboer.filter(n => n.h > meg.v && n.v < meg.h);
+  const over = loddrett.filter(n => n.cy < meg.cy && n.b <= meg.cy);
+  const under = loddrett.filter(n => n.cy > meg.cy && n.t >= meg.cy);
+  const a = over.length ? Math.max.apply(null, over.map(n => n.b)) : 0;
+  const b = under.length ? Math.min.apply(null, under.map(n => n.t)) : F.h;
+  // Only when there is a neighbor on at least one side; edge to edge is simply the middle of the slide
+  if ((over.length || under.length) && b - a > meg.b - meg.t) ut.Y.push({ v: (a + b) / 2, pri: 0, navn: 'Lik avstand' });
+  const vannrett = naboer.filter(n => n.b > meg.t && n.t < meg.b);
+  const venstre = vannrett.filter(n => n.cx < meg.cx && n.h <= meg.cx);
+  const hoyre = vannrett.filter(n => n.cx > meg.cx && n.v >= meg.cx);
+  const c = venstre.length ? Math.max.apply(null, venstre.map(n => n.h)) : 0;
+  const d = hoyre.length ? Math.min.apply(null, hoyre.map(n => n.v)) : F.w;
+  if ((venstre.length || hoyre.length) && d - c > meg.h - meg.v) ut.X.push({ v: (c + d) / 2, pri: 0, navn: 'Lik avstand' });
+  return ut;
+}
+
 function snapp(l, x, y, av) {
   const res = { x: Math.round(x), y: Math.round(y), guider: [] };
   if (!state.hjelpelinjer || !av) return res;
   const t = snappTerskel();
-  const M = snappMaal(l.id);
+  // When a group is dragged, none of its own layers are targets
+  const utenom = drag && drag.flokk ? drag.flokk.map(k => k.lag) : [l];
+  const M = snappMaal(utenom);
+  const lik = likAvstandMaal({ v: x + av.v, h: x + av.h, t: y + av.t, b: y + av.b, cx: x + av.cx, cy: y + av.cy }, utenom);
+  // Equal spacing applies to the box center only, so it is checked against that anchor alone
+  const finnLik = (anker, maal) => {
+    let beste = null;
+    maal.forEach(m => {
+      const dd = m.v - anker;
+      if (Math.abs(dd) <= t && (!beste || Math.abs(dd) < Math.abs(beste.d))) beste = { d: dd, linje: m.v, pri: 0, boks: null, navn: m.navn, lik: true };
+    });
+    return beste;
+  };
   const finn = (ankre, maal) => {
     let beste = null;
     ankre.forEach(a => maal.forEach(m => {
@@ -3644,10 +4062,12 @@ function snapp(l, x, y, av) {
     }));
     return beste;
   };
-  const bx = finn([x + av.v, x + av.cx, x + av.h], M.X);
-  if (bx) { res.x = Math.round(x + bx.d); res.guider.push({ akse: 'x', v: bx.linje, boks: bx.boks, midt: bx.pri === 0, navn: bx.navn }); }
-  const by = finn([y + av.t, y + av.cy, y + av.b], M.Y);
-  if (by) { res.y = Math.round(y + by.d); res.guider.push({ akse: 'y', v: by.linje, boks: by.boks, midt: by.pri === 0, navn: by.navn }); }
+  // Equal spacing wins over other targets that are about as near: it's the one that is hard to hit by eye
+  const velg = (vanlig, likt) => !likt ? vanlig : (!vanlig || Math.abs(likt.d) <= Math.abs(vanlig.d) + 2.5 ? likt : vanlig);
+  const bx = velg(finn([x + av.v, x + av.cx, x + av.h], M.X), finnLik(x + av.cx, lik.X));
+  if (bx) { res.x = Math.round(x + bx.d); res.guider.push({ akse: 'x', v: bx.linje, boks: bx.boks, midt: bx.pri === 0, navn: bx.navn, lik: !!bx.lik }); }
+  const by = velg(finn([y + av.t, y + av.cy, y + av.b], M.Y), finnLik(y + av.cy, lik.Y));
+  if (by) { res.y = Math.round(y + by.d); res.guider.push({ akse: 'y', v: by.linje, boks: by.boks, midt: by.pri === 0, navn: by.navn, lik: !!by.lik }); }
   meldSnapp(res.guider);
   return res;
 }
@@ -3661,14 +4081,16 @@ function meldSnapp(guider) {
   state._sisteSnapp = nye;
   if (!guider.length) return;
   state._snappTid = na;
-  state._snappNavn = guider.map(g => g.navn).filter(Boolean).join(' og ');
+  state._snappNavn = guider.map(g => g.navn).filter(Boolean)
+    .map((t, i) => i ? t.charAt(0).toLowerCase() + t.slice(1) : t).join(' og ');
   try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) { /* not all devices */ }
 }
 
 function tegnGuider(ctx) {
   const F = FMT();
   const linjer = [];
-  if (drag && drag.modus === 'flytt' && state._guider) state._guider.forEach(g => linjer.push({ akse: g.akse, v: g.v, sterk: true }));
+  // Equal spacing has no line of its own: the green distance labels show it
+  if (drag && drag.modus === 'flytt' && state._guider) state._guider.forEach(g => { if (!g.lik) linjer.push({ akse: g.akse, v: g.v, sterk: true }); });
   // When nothing is being dragged: show a quiet line if the selected layer sits centered in the slide
   if (!linjer.length && state.hjelpelinjer) {
     const l = valgt();
@@ -3752,13 +4174,18 @@ function tegnNaa() {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   const s = aktivSlide();
   if (!s) { ctx.clearRect(0, 0, lerret.width, lerret.height); return; }
-  const kikk = kikkBredde();
+  const kikk = kikkSider();
+  const harKikk = kikk.v + kikk.h > 0;
   ctx.clearRect(0, 0, lerret.width, lerret.height);
-  ctx.setTransform(1, 0, 0, 1, kikk, 0);      // everything is drawn in the slide's coordinates
-  if (kikk) tegnNaboer(ctx, kikk);
+  ctx.setTransform(1, 0, 0, 1, kikk.v, 0);    // everything is drawn in the slide's coordinates
+  if (harKikk) tegnNaboer(ctx, kikk);
   samlerHitboks = true;
-  try { renderSlide(ctx, s, dragKvalitet ? 'rask' : 'fin'); } finally { samlerHitboks = false; }
-  if (kikk) tegnSomGap(ctx, kikk);
+  ctx.save();
+  // With neighbors in view, the slide is cut at its own edge, the way App Store shows it.
+  // Without them the canvas edge does the same.
+  if (harKikk) { const F = FMT(); ctx.beginPath(); ctx.rect(0, 0, F.w, F.h); ctx.clip(); }
+  try { renderSlide(ctx, s, dragKvalitet ? 'rask' : 'fin'); } finally { samlerHitboks = false; ctx.restore(); }
+  if (harKikk) { tegnSomGap(ctx, kikk); tegnFolgere(ctx, kikk); }
   tegnRutenett(ctx);
   // Drop hit boxes for layers that exist in no slide
   const alle = new Set();
@@ -3854,14 +4281,18 @@ function dypKopiSlide(s) {
   const k = JSON.parse(JSON.stringify(s));
   k.id = uid();
   const gruppekart = {};
+  const idkart = {};
   k.lag.forEach(l => {
+    const gammel = l.id;
     l.id = uid();
+    idkart[gammel] = l.id;
     // Groups should belong to their own slide, not be shared with the original
     if (l.gruppe) {
       if (!gruppekart[l.gruppe]) gruppekart[l.gruppe] = uid();
       l.gruppe = gruppekart[l.gruppe];
     }
   });
+  k.lag.forEach(l => { if (l.folgerId) { if (idkart[l.folgerId]) l.folgerId = idkart[l.folgerId]; else delete l.folgerId; } });
   return k;
 }
 
@@ -3872,13 +4303,13 @@ async function leggTilSkjermbilder(filer) {
   endre(() => {
     ider.forEach((id, k) => {
       const s = aktivSlide();
-      const tomt = s && s.lag.find(l => l.type === 'telefon' && !l.skjermbildeId);
+      const tomt = s && s.lag.find(l => erEnhet(l) && !l.skjermbildeId);
       if (k === 0 && tomt) { tomt.skjermbildeId = id; return; }
       const mal = aktivSlide();
       const ny = mal ? dypKopiSlide(mal) : nySlide(state.prosjekt.format);
-      const tel = ny.lag.find(l => l.type === 'telefon');
+      const tel = ny.lag.find(erEnhet);
       if (tel) tel.skjermbildeId = id;
-      else ny.lag.unshift(nyttTelefonlag({ x: F.w / 2, y: F.h / 2 + 210, skjermbildeId: id }));
+      else ny.lag.unshift(nyEnhet({ x: F.w / 2, y: F.h / 2 + (serieFor(state.prosjekt.format) === 'mac' ? 0 : 210), skjermbildeId: id }));
       state.prosjekt.slides.push(ny);
       state.prosjekt.aktiv = state.prosjekt.slides.length - 1;
       nullstillMerking();
@@ -4073,12 +4504,20 @@ function knapperad(knapper) {
 
 const bildevalg = document.getElementById('bildevalg');
 
+/* A slide can be taken out of the template (`egen`). It keeps its look, changes made in it
+   stay there, and changes to the template don't reach it. */
+function folgerMalen(s) { return !!s && !s.egen; }
+
+// Where changes apply right now. In a slide that doesn't follow the template, only there.
+function malmodus() { return folgerMalen(aktivSlide()) ? state.malmodus : 'bilde'; }
+
 // The slides a change should go out to, based on where you've said it applies
 function malBilder() {
   const s0 = aktivSlide();
-  const andre = state.prosjekt.slides.filter(s => s !== s0);
-  if (state.malmodus === 'bilde') return [];
-  if (state.malmodus === 'utvalg') return andre.filter(s => state.malUtvalg.indexOf(s.id) >= 0);
+  const andre = state.prosjekt.slides.filter(s => s !== s0 && folgerMalen(s));
+  const modus = malmodus();
+  if (modus === 'bilde') return [];
+  if (modus === 'utvalg') return andre.filter(s => state.malUtvalg.indexOf(s.id) >= 0);
   return andre;
 }
 
@@ -4101,7 +4540,7 @@ function skrivTilMal(kilde, felter) {
   const r = rollen(kilde.rolleId);
   // A layer that isn't in the template exists only in this slide and should not spread elsewhere
   if (!r) return 0;
-  const serie = state.malmodus === 'serie';
+  const serie = malmodus() === 'serie';
   let n = 0;
   if (serie) {
     felter.forEach(f => { r.felt[f] = kopiVerdi(kilde[f]); });
@@ -4137,7 +4576,7 @@ function skrivBakgrunnTilMal(felter) {
   const s0 = aktivSlide();
   if (!s0) return 0;
   const mal = state.prosjekt.mal;
-  const serie = state.malmodus === 'serie';
+  const serie = malmodus() === 'serie';
   if (mal && serie) {
     felter.forEach(f => { mal.bakgrunn[f] = kopiVerdi(s0.bakgrunn[f]); });
   }
@@ -4165,6 +4604,8 @@ function skrivBakgrunnTilMal(felter) {
 // the panel builders call it.
 function speilHvisPaa(felter) {
   if (!felter || !felter.length) return;
+  // A slide outside the template keeps its changes to itself, without marking anything as a deviation
+  if (!folgerMalen(aktivSlide())) { planleggLagring(); return; }
   if (state.valgtLag === 'bakgrunn') {
     if (state.malmodus === 'bilde') {
       const s0 = aktivSlide();
@@ -4377,7 +4818,7 @@ function lagStripekort(i, h, medVerktoy) {
   const w = Math.round(h * F.w / F.h);
   const kort = el('<div class="stripekort' + (i === state.prosjekt.aktiv ? ' aktiv' : '') + '">' +
     '<canvas width="' + Math.round(w * 2) + '" height="' + Math.round(h * 2) + '" data-i="' + i + '"></canvas>' +
-    '<span class="nr">' + (i + 1) + '</span></div>');
+    '<span class="nr">' + (i + 1) + (folgerMalen(state.prosjekt.slides[i]) ? '' : ' · egen') + '</span></div>');
   const cv = kort.querySelector('canvas');
   cv.style.width = w + 'px';
   cv.style.height = h + 'px';
@@ -4470,7 +4911,7 @@ function byggStripe() {
 function byggGapvalg(boks) {
   if (!boks) return;
   boks.innerHTML = '';
-  BUTIKKMAAL.forEach(m => {
+  BUTIKKMAAL[FMT().serie].forEach(m => {
     const b = el('<button class="minknapp' + (Math.abs((state.prosjekt.mellomrom || 0) - m.mellomrom) < 0.05 ? ' aktiv' : '') + '" title="' + m.hjelp + '">' + m.navn + '</button>');
     b.onclick = () => {
       endre(() => { state.prosjekt.mellomrom = m.mellomrom; }, { tving: true });
@@ -4579,7 +5020,8 @@ function publiseringssjekk() {
   const funn = [];
   const margProsent = state.rutenett.tryggMarg;
   const marg = Math.round(F.w * margProsent / 100);
-  const sokFaktor = SOKBREDDE_PT / F.w;
+  // The search result is measured for iPhone only
+  const sokFaktor = F.serie === 'mac' ? 0 : SOKBREDDE_PT / F.w;
   const gjennomsiktige = [];
   const overskrifter = new Map();      // normalised headline -> { tekst, ider, lag }
 
@@ -4626,6 +5068,25 @@ function publiseringssjekk() {
         }
       }
 
+      if (l.type === 'mac') {
+        const bilde = l.skjermbildeId ? bilder.get(l.skjermbildeId) : null;
+        if (!l.skjermbildeId) {
+          funn.push({ alvor: 'feil', hvor: hvor, i: i, lag: l.id, tekst: navn + ' mangler skjermbilde.' });
+        } else if (bilde && bilde.img) {
+          const skjermbredde = Math.round(MAC.skjerm.b * macMaal(l).mm);
+          if (bilde.img.width < skjermbredde * 0.9) {
+            funn.push({ alvor: 'advarsel', hvor: hvor, i: i, lag: l.id,
+              tekst: navn + ': Skjermbildet er ' + bilde.img.width + ' px bredt, men vises ' + skjermbredde +
+                     ' px bredt. Det blir uskarpt. Gjør Macen mindre.' });
+          }
+          if (Math.abs(bilde.img.width / bilde.img.height - MAC_FORHOLD) > 0.01) {
+            funn.push({ alvor: 'advarsel', hvor: hvor, i: i, lag: l.id,
+              tekst: navn + ': Skjermbildet er ' + bilde.img.width + ' × ' + bilde.img.height + ' px og har en annen form enn skjermen på MacBook Air 13 tommer. ' +
+                     'Fasade klipper det til skjermen. Ta et skjermbilde av hele skjermen med ⇧⌘3, så kommer alt med.' });
+          }
+        }
+      }
+
       // Text that crosses an edge is cut off. A phone or graphic that crosses
       // an edge is a deliberate crop; only crowding the margin is reported.
       if (b && !l.spenn) {
@@ -4644,7 +5105,7 @@ function publiseringssjekk() {
           funn.push({ alvor: 'feil', hvor: hvor, i: i, lag: l.id,
             tekst: navn + ' har fortsatt eksempelteksten «' + tekst + '». Skriv din egen tekst.' });
         }
-        if (l === overskrift) {
+        if (l === overskrift && sokFaktor) {
           const iPunkter = Math.round(l.str * sokFaktor * 10) / 10;
           if (iPunkter < 8) {
             funn.push({ alvor: 'advarsel', hvor: hvor, i: i, lag: l.id,
@@ -4680,7 +5141,7 @@ function publiseringssjekk() {
       tekst: 'Bakgrunnen er gjennomsiktig. App Store godtar ikke gjennomsiktighet, så Fasade gjør den hvit når du laster ned.' });
   }
 
-  if (state.prosjekt.slides.length < 3) {
+  if (state.prosjekt.slides.length < 3 && sokFaktor) {
     funn.push({ alvor: 'info', hvor: 'Serien', i: 0, lag: null,
       tekst: 'Serien har ' + state.prosjekt.slides.length + ' bilde' + (state.prosjekt.slides.length === 1 ? '' : 'r') +
              '. App Store viser de tre første i søkeresultatet, så tre er et fornuftig minimum.' });
@@ -4758,9 +5219,9 @@ function byggInnhold() {
       felter.appendChild(rad);
     });
 
-    s.lag.filter(l => l.type === 'telefon').forEach(l => {
+    s.lag.filter(erEnhet).forEach(l => {
       const b = l.skjermbildeId ? bilder.get(l.skjermbildeId) : null;
-      const rad = el('<div class="felt"><label>' + (l.navn || 'Telefon').replace(/</g, '&lt;') + '</label>' +
+      const rad = el('<div class="felt"><label>' + (l.navn || LAGTYPENAVN[l.type]).replace(/</g, '&lt;') + '</label>' +
         '<div class="skjerm"></div></div>');
       const skjerm = rad.querySelector('.skjerm');
       skjerm.appendChild(knapperad([
@@ -4800,7 +5261,8 @@ function byggStorvisning() {
   const boks = document.getElementById('storrad');
   if (!boks || !document.getElementById('storvisning').classList.contains('vis')) return;
   const F = FMT();
-  const sok = state.storHvor === 'sok';
+  const mac = F.serie === 'mac';
+  const sok = state.storHvor === 'sok' && !mac;
   // In the search result the slides show small, and only the first three
   const hoyde = sok ? Math.round(SOKBREDDE_PT * F.h / F.w) : state.storHoyde;
   byggRad(boks, hoyde, false, sok ? 3 : 0);
@@ -4808,7 +5270,8 @@ function byggStorvisning() {
   document.getElementById('storstr').disabled = sok;
   const hvor = document.getElementById('storhvor');
   hvor.innerHTML = '';
-  [['produkt', 'Produktside'], ['sok', 'Søkeresultat']].forEach(v => {
+  // Only measured for iPhone; a Mac series shows the product page alone
+  (mac ? [] : [['produkt', 'Produktside'], ['sok', 'Søkeresultat']]).forEach(v => {
     const b = el('<button class="minknapp' + ((state.storHvor || 'produkt') === v[0] ? ' aktiv' : '') + '">' + v[1] + '</button>');
     b.onclick = () => { state.storHvor = v[0]; byggStorvisning(); };
     hvor.appendChild(b);
@@ -4822,7 +5285,10 @@ function byggStorvisning() {
       ' punkter, ut fra tre bilder i bredden på en vanlig iPhone. Det som ikke lar seg lese her, blir ikke lest.';
   } else {
     byggSomvarsel(fot);
-    if (!fot.children.length) {
+    if (!fot.children.length && mac) {
+      fot.textContent = 'Mellomrommet er målt på produktsiden i nettleseren: 20 piksler mellom bilder som er 370 til 540 piksler brede. ' +
+        'Mac App Store-appen er ikke målt.';
+    } else if (!fot.children.length) {
       fot.textContent = 'Mellomrommet er hentet fra ekte produktsider: 4,4 % i App Store på iPhone, ' +
         '7,3 % i nettleseren. Sjekk gjerne begge. En overgang som tåler begge målene, tåler alle flatene.';
     }
@@ -4869,6 +5335,92 @@ function slidehandling(g, i) {
   }
 }
 
+/* ------- This slide and the template -------
+
+   The template is the shared look of the series. Any slide that follows it can be made
+   the template («Bruk som mal»): its look goes out to the others, and what they have
+   deliberately set differently stays. A slide can also leave the template entirely. */
+
+function byggBildeseksjon() {
+  const boks = document.getElementById('bildeseksjon');
+  boks.innerHTML = '';
+  const s = aktivSlide();
+  if (!s || state.prosjekt.slides.length < 2) { boks.style.display = 'none'; return; }
+  boks.style.display = '';
+  boks.appendChild(el('<div class="seksjon">Bilde ' + (state.prosjekt.aktiv + 1) + '</div>'));
+  const id = 'folger-' + uid();
+  const rad = el('<div class="bryterrad"><input type="checkbox" id="' + id + '"' + (folgerMalen(s) ? ' checked' : '') +
+    '><label for="' + id + '">Følger malen</label></div>');
+  rad.querySelector('input').addEventListener('change', ev => settFolgerMalen(s, ev.target.checked));
+  boks.appendChild(rad);
+  if (!folgerMalen(s)) {
+    boks.appendChild(el('<div class="varsel">Bildet beholder utseendet sitt. Endringer her blir her, og endringer i malen når ikke hit. ' +
+      'Huker du av igjen, får bildet utseendet fra malen.</div>'));
+  }
+  const knapp = el('<button class="minknapp" style="margin-top:6px" title="Utseendet i dette bildet blir malen og går ut til bildene som følger malen">Bruk som mal for serien</button>');
+  knapp.onclick = () => brukSomMal(s);
+  boks.appendChild(knapp);
+}
+
+function settFolgerMalen(s, paa) {
+  endre(() => {
+    if (!paa) { s.egen = true; return; }
+    delete s.egen;
+    // Back in the template: the slide gets the template's look. The content stays.
+    const m = state.prosjekt.mal;
+    if (m) s.bakgrunn = Object.assign(kopiVerdi(m.bakgrunn), { avvik: {} });
+    s.lag.forEach(l => { if (rollen(l.rolleId)) tilbakestillTilMal(l); });
+  }, { struktur: true, tving: true });
+  setStatus(paa
+    ? 'Bildet følger malen igjen og har fått utseendet derfra. Angre med ' + KMD + 'Z om du vil ha det gamle tilbake.'
+    : 'Bildet følger ikke lenger malen');
+}
+
+// The look of this slide becomes the template and goes out to the slides that follow it.
+// Deliberate deviations in those slides stay. Layers that exist only here join the template.
+function brukSomMal(s0) {
+  const mal = state.prosjekt.mal;
+  if (!mal) return;
+  let n = 0;
+  endre(() => {
+    delete s0.egen;
+    const andre = state.prosjekt.slides.filter(s => s !== s0 && folgerMalen(s));
+    // Background
+    const bg = kopiVerdi(s0.bakgrunn);
+    delete bg.avvik;
+    mal.bakgrunn = bg;
+    s0.bakgrunn.avvik = {};
+    andre.forEach(s => {
+      const avvik = s.bakgrunn.avvik || {};
+      Object.keys(bg).forEach(f => { if (!avvik[f]) s.bakgrunn[f] = kopiVerdi(bg[f]); });
+    });
+    // Layers
+    s0.lag.forEach(l => {
+      let r = rollen(l.rolleId);
+      if (!r) {
+        r = nyRolle(l);
+        mal.roller.push(r);
+        l.rolleId = r.id;
+        andre.forEach(s => { if (!s.lag.some(x => x.rolleId === r.id)) s.lag.push(lagFraRolle(r)); });
+      } else {
+        r.felt = malFelt(l);
+        r.navn = l.navn;
+      }
+      l.avvik = {};
+      andre.forEach(s => s.lag.forEach(m => {
+        if (m.rolleId !== r.id) return;
+        const avvik = m.avvik || {};
+        Object.keys(r.felt).forEach(f => { if (!avvik[f]) m[f] = kopiVerdi(r.felt[f]); });
+        m.navn = r.navn;
+      }));
+    });
+    n = andre.length;
+  }, { struktur: true, tving: true });
+  const utenfor = state.prosjekt.slides.filter(s => !folgerMalen(s)).length;
+  setStatus('Bilde ' + (slideNr(s0) + 1) + ' er nå malen. ' + n + (n === 1 ? ' bilde' : ' bilder') + ' har fått utseendet' +
+    (utenfor ? ', ' + utenfor + ' følger ikke malen og er urørt' : '') + '. Angre med ' + KMD + 'Z.', 6000);
+}
+
 function byggSlideliste() {
   const boks = document.getElementById('slideliste');
   boks.innerHTML = '';
@@ -4877,7 +5429,7 @@ function byggSlideliste() {
   state.prosjekt.slides.forEach((s, i) => {
     const kort = el('<div class="slidekort' + (i === state.prosjekt.aktiv ? ' aktiv' : '') + '">' +
       '<canvas width="132" height="' + Math.round(132 * F.h / F.w) + '" data-i="' + i + '"></canvas>' +
-      '<div class="navn">Bilde ' + (i + 1) + '</div>' +
+      '<div class="navn">Bilde ' + (i + 1) + (folgerMalen(s) ? '' : ' <span class="egenmerke" title="Følger ikke malen">Egen</span>') + '</div>' +
       '<div class="rad">' +
       '<button class="miniknapp" data-g="opp" title="Flytt frem">&#8593;</button>' +
       '<button class="miniknapp" data-g="ned" title="Flytt bak">&#8595;</button>' +
@@ -4895,7 +5447,7 @@ function byggSlideliste() {
 
 /* ------- The layer list ------- */
 
-const LAGTYPENAVN = { telefon: 'Telefon', tekst: 'Tekst', grafikk: 'Grafikk' };
+const LAGTYPENAVN = { telefon: 'Telefon', mac: 'Mac', tekst: 'Tekst', grafikk: 'Grafikk' };
 
 function byggLagliste() {
   const boks = document.getElementById('lagliste');
@@ -4932,6 +5484,7 @@ function byggLagliste() {
         endre(() => {
           const k = JSON.parse(JSON.stringify(l));
           k.id = uid(); k.x += 40; k.y += 40;
+          delete k.folgerId;
           s.lag.splice(i + 1, 0, k);
           merkLag(k.id);
         }, { struktur: true, tving: true });
@@ -4995,15 +5548,16 @@ function byggEgenskaperNaa() {
       l.navn = navninp.value;
       // The name is the role's identity, so it follows the series unless you say otherwise
       const r = rollen(l.rolleId);
-      if (r && state.malmodus === 'serie') {
+      if (r && malmodus() === 'serie') {
         r.navn = l.navn;
-        state.prosjekt.slides.forEach(s2 => s2.lag.forEach(m => { if (m.rolleId === r.id) m.navn = l.navn; }));
+        state.prosjekt.slides.forEach(s2 => { if (folgerMalen(s2)) s2.lag.forEach(m => { if (m.rolleId === r.id) m.navn = l.navn; }); });
       }
     }, { struktur: true });
   });
   boks.appendChild(navnerad);
 
   if (l.type === 'telefon') byggTelefonPanel(boks, l);
+  else if (l.type === 'mac') byggMacPanel(boks, l);
   else if (l.type === 'tekst') byggTekstPanel(boks, l);
   else if (l.type === 'grafikk') byggGrafikkPanel(boks, l);
 
@@ -5011,7 +5565,7 @@ function byggEgenskaperNaa() {
   boks.appendChild(skyv('Synlighet', () => l.opasitet, v => { l.opasitet = v; }, 0, 100, 1, v => v + ' %', 100, ['opasitet']));
   const duo = el('<div class="duorad"></div>');
   duo.appendChild(feltrad('X', () => l.x, v => { l.x = v; }, ['x', 'y'], true));
-  duo.appendChild(feltrad('Y', () => l.y, v => { l.y = v; }, ['x', 'y'], true));
+  duo.appendChild(feltrad('Y', () => l.y, v => { l.y = v; oppdaterLuft([l]); }, ['x', 'y', 'luftOver'], true));
   boks.appendChild(medAlle(duo, ['x', 'y']));
   boks.appendChild(knapperad([
     { label: 'Midtstill vannrett', klikk: () => midtstill(l, 'x') },
@@ -5143,8 +5697,9 @@ function stillPaaLinje(hvor) {
       else if (hvor === 'bunn') l.y = Math.round(l.y + (B.b - b.b));
       else if (hvor === 'midty') l.y = Math.round(l.y + (B.cy - b.cy));
     });
+    oppdaterLuft(flokk);
   }, { struktur: true, tving: true });
-  speilHvisPaa(['x', 'y']);
+  speilHvisPaa(['x', 'y', 'luftOver']);
 }
 
 function fordelJevnt(akse) {
@@ -5167,8 +5722,9 @@ function fordelJevnt(akse) {
       }
       ved += (akse === 'x' ? k.b.h - k.b.v : k.b.b - k.b.t) + luft;
     });
+    oppdaterLuft(flokk);
   }, { struktur: true, tving: true });
-  speilHvisPaa(['x', 'y']);
+  speilHvisPaa(['x', 'y', 'luftOver']);
   setStatus('Avstanden er lik: ' + Math.round(luft) + ' px mellom kantene');
 }
 
@@ -5214,7 +5770,7 @@ function byggFlerpanel(boks, tittel, flokk) {
       const F = FMT();
       if (!B) return;
       const d = F.h / 2 - B.cy;
-      endre(() => { flokk.forEach(l => { l.y = Math.round(l.y + d); }); }, { struktur: true, tving: true });
+      endre(() => { flokk.forEach(l => { l.y = Math.round(l.y + d); }); oppdaterLuft(flokk); }, { struktur: true, tving: true });
     } }
   ]));
 
@@ -5255,6 +5811,10 @@ function byggFlerpanel(boks, tittel, flokk) {
    what saves you from having to remember the same thing four times. */
 
 function byggMalstripe(boks, lag) {
+  if (state.prosjekt.slides.length > 1 && !folgerMalen(aktivSlide())) {
+    boks.appendChild(el('<div class="varsel">Dette bildet følger ikke malen. Endringer her gjelder bare dette bildet.</div>'));
+    return;
+  }
   if (state.prosjekt.slides.length > 1) {
     const rad = segrad([
       { label: 'Hele serien', aktiv: state.malmodus === 'serie', velg: () => { state.malmodus = 'serie'; byggEgenskaper(); } },
@@ -5333,7 +5893,7 @@ function leggIMalen(lag) {
     lag.rolleId = r.id;
     lag.avvik = {};
     state.prosjekt.slides.forEach(s => {
-      if (s === aktivSlide()) return;
+      if (s === aktivSlide() || !folgerMalen(s)) return;
       if (s.lag.some(x => x.rolleId === r.id)) return;
       s.lag.push(lagFraRolle(r));
     });
@@ -5413,6 +5973,34 @@ function byggTelefonPanel(boks, l) {
       : 'Fasade bruker statuslinjen fra skjermbildet du valgte.';
     boks.appendChild(el('<div class="varsel">' + (st.feil || hjelp) + '</div>'));
   }
+}
+
+function byggMacPanel(boks, l) {
+  const norm = nyttMaclag();
+  boks.appendChild(knapperad([
+    { label: l.skjermbildeId ? 'Bytt skjermbilde' : 'Velg skjermbilde', klikk: () => {
+      pickFile('image/png,image/jpeg,image/webp', false, filer => {
+        lesFilerTilBilder(filer).then(ider => {
+          if (ider[0]) endre(() => { l.skjermbildeId = ider[0]; }, { tving: true });
+        });
+      });
+    } },
+    { label: 'Fjern', svak: true, klikk: () => endre(() => { l.skjermbildeId = null; }) }
+  ]));
+  boks.appendChild(el('<div style="font-size:12px;color:var(--gra);margin-top:2px">MacBook Air 13 tommer</div>'));
+  const grid = el('<div class="fargegrid"></div>');
+  MACFARGER.forEach(v => {
+    const b = el('<button title="' + v.hex + '"' + (l.variant === v.id ? ' class="aktiv"' : '') + '><span class="prikk" style="background:' + v.hex + '"></span>' + v.navn + '</button>');
+    b.onclick = () => { endre(() => { l.variant = v.id; }, { struktur: true }); speilHvisPaa(['variant']); };
+    grid.appendChild(b);
+  });
+  boks.appendChild(medAlle(grid, ['variant']));
+  boks.appendChild(skyv('Størrelse', () => l.skala, v => { l.skala = v; }, 0.1, 1.2, 0.01, v => Math.round(v * 100) + ' %', norm.skala, ['skala']));
+  boks.appendChild(skyv('Skygge', () => l.skygge, v => { l.skygge = v; }, 0, 100, 1, v => v + ' %', norm.skygge, ['skygge']));
+  boks.appendChild(el('<div style="font-size:12px;color:var(--gra);margin-top:2px">Utsnitt av skjermbildet</div>'));
+  boks.appendChild(skyv('Zoom', () => l.zoom, v => { l.zoom = v; }, 100, 200, 1, v => v + ' %', norm.zoom, ['zoom']));
+  boks.appendChild(skyv('Sideveis', () => l.panX, v => { l.panX = v; }, -100, 100, 1, v => v + ' %', norm.panX, ['panX']));
+  boks.appendChild(skyv('Opp / ned', () => l.panY, v => { l.panY = v; }, -100, 100, 1, v => v + ' %', norm.panY, ['panY']));
 }
 
 function byggTekstPanel(boks, l) {
@@ -5613,7 +6201,7 @@ function byggBakgrunnPanel(boks, s) {
 function lerretPos(e) {
   const r = lerret.getBoundingClientRect();
   return {
-    x: (e.clientX - r.left) * lerret.width / r.width - kikkBredde(),
+    x: (e.clientX - r.left) * lerret.width / r.width - kikkSider().v,
     y: (e.clientY - r.top) * lerret.height / r.height
   };
 }
@@ -5645,7 +6233,7 @@ function treffLag(p) {
 let drag = null;
 
 lerret.addEventListener('pointerdown', e => {
-  const p = lerretPos(e);
+  let p = lerretPos(e);
 
   // If a text is being edited, clicks inside it go to the cursor, not to moving it
   const red = redigertLag();
@@ -5673,15 +6261,38 @@ lerret.addEventListener('pointerdown', e => {
     if (Math.hypot(p.x - hj.x, p.y - hj.y) < 58) {
       merk(true);
       const h = hitboks.get(l.id);
-      const start = l.type === 'telefon' ? l.skala : (l.type === 'tekst' ? l.str : l.hoyde);
+      const start = l[skalafelt(l)];
       drag = { modus: 'skaler', lag: l, start: start, dist: Math.max(50, Math.hypot(p.x - h.cx, p.y - h.cy)) };
       try { lerret.setPointerCapture(e.pointerId); } catch (err) { /* synthetic pointers have no id */ }
       dragKvalitet = true;
       return;
     }
   }
-  const t = treffLag(p);
+  let t = treffLag(p);
   const tillegg = e.shiftKey || e.metaKey && false;      // Shift adds to the selection
+
+  // A click on another slide makes it the one you work in, and the layer under
+  // the pointer is selected there right away
+  if (!t) {
+    const j = slideVedPunkt(p);
+    if (j >= 0) {
+      const dx = (j - state.prosjekt.aktiv) * steget();
+      state.somSvev = -1;
+      lerret.title = '';
+      byttSlide(j);
+      tegnNaa();                                   // hit boxes for the new slide
+      const her = { x: p.x - dx, y: p.y };         // the same spot, in the new slide's coordinates
+      const ny = lerretPos(e);
+      const t2 = treffLag(her);
+      if (Math.abs(ny.x - her.x) > 1) {
+        // The view moved to center the new slide, so the pointer is no longer over
+        // what you clicked. Select it, but don't start a drag from the wrong place.
+        if (t2) { merkLag(t2.id, tillegg); byggAlt(); tegnSnart(); }
+        return;
+      }
+      p = ny; t = t2;                              // the view stood still: carry on as a normal click
+    }
+  }
 
   if (!t) {
     // Click in empty space: start a drag-select
@@ -5730,6 +6341,13 @@ function gruppeAvstand(lagene, anker) {
            t: t - anker.y, cy: (t + b) / 2 - anker.y, b: b - anker.y };
 }
 
+lerret.addEventListener('pointerleave', () => {
+  if (state.somSvev < 0) return;
+  state.somSvev = -1;
+  lerret.title = '';
+  tegnSnart();
+});
+
 lerret.addEventListener('pointermove', e => {
   const p = lerretPos(e);
   if (!drag) {
@@ -5740,6 +6358,13 @@ lerret.addEventListener('pointermove', e => {
     if (rh && innenfor(p, rh, 14)) c = 'text';
     else if (l && state._handtak && Math.hypot(p.x - state._handtak.x, p.y - state._handtak.y) < 58) c = 'nwse-resize';
     else if (treffLag(p)) c = 'grab';
+    const svev = c === 'default' ? slideVedPunkt(p) : -1;
+    if (svev >= 0) c = 'pointer';
+    if (svev !== state.somSvev) {
+      state.somSvev = svev;
+      lerret.title = svev >= 0 ? 'Bilde ' + (svev + 1) + '. Klikk for å jobbe i det.' : '';
+      tegnSnart();
+    }
     lerret.style.cursor = c;
     return;
   }
@@ -5771,27 +6396,31 @@ lerret.addEventListener('pointermove', e => {
     const s = e.altKey ? { x: Math.round(raaX), y: Math.round(raaY), guider: [] } : snapp(l, raaX, raaY, drag.av);
     const dx = s.x - anker.x0, dy = s.y - anker.y0;
     drag.flokk.forEach(k => { k.lag.x = Math.round(k.x0 + dx); k.lag.y = Math.round(k.y0 + dy); });
+    oppdaterLuft(drag.flokk.map(k => k.lag));
     state._guider = s.guider;
     state._maal = e.altKey ? null : avstandsmaal(drag.flokk.map(k => k.lag));
+    // With the other slides in view, they follow along while you drag, not just when you let go
+    if (harKikk()) speilHvisPaa(['x', 'y', 'luftOver']);
   } else {
     const h = hitboks.get(l.id);
     const r = Math.hypot(p.x - h.cx, p.y - h.cy) / drag.dist;
-    if (l.type === 'telefon') l.skala = klem(Math.round(drag.start * r * 1000) / 1000, 0.1, 1.2);
+    if (erEnhet(l)) l.skala = klem(Math.round(drag.start * r * 1000) / 1000, 0.1, 1.2);
     else if (l.type === 'tekst') l.str = klem(Math.round(drag.start * r), 24, 280);
     else l.hoyde = klem(Math.round(drag.start * r), 40, 3000);
+    if (harKikk()) speilHvisPaa([skalafelt(l)]);
   }
   tegnSnart();
 });
 
 // The field that changes when a layer is scaled depends on the layer type
-function skalafelt(l) { return l.type === 'telefon' ? 'skala' : (l.type === 'tekst' ? 'str' : 'hoyde'); }
+function skalafelt(l) { return erEnhet(l) ? 'skala' : (l.type === 'tekst' ? 'str' : 'hoyde'); }
 
 function avsluttDrag(e) {
   if (!drag) return;
   const tekstvalg = drag.modus === 'tekstvalg';
   const markering = drag.modus === 'dramarkering';
   if (drag.modus === 'flytt') {
-    speilHvisPaa(['x', 'y']);
+    speilHvisPaa(['x', 'y', 'luftOver']);
     // Continuous layers follow into the neighboring slides. Flag it, so it
     // doesn't look like something moved on its own.
     const gjennom = drag.flokk ? drag.flokk.map(k => k.lag).filter(l => l.spenn) : [];
@@ -5881,6 +6510,13 @@ function settSomModus(paa) {
   settLerretstorrelse();
 }
 
+function settSomOmfang(omfang) {
+  state.somOmfang = omfang;
+  try { localStorage.setItem('asc-somomfang', omfang); } catch (e) { /* private mode */ }
+  settLerretstorrelse();
+  tegnSnart();
+}
+
 function settHjelpelinjer(paa) {
   state.hjelpelinjer = paa;
   try { localStorage.setItem('asc-hjelpelinjer', paa ? '1' : '0'); } catch (e) { /* private mode */ }
@@ -5915,8 +6551,22 @@ function byggRutevindu() {
   });
   rutevindu.appendChild(oversikt);
   const enesteBilde = state.prosjekt.slides.length < 2;
-  rutevindu.appendChild(valgrad('Vis overgangene', state.somModus && !enesteBilde, settSomModus,
+  rutevindu.appendChild(valgrad('Vis nabobildene', state.somModus && !enesteBilde, settSomModus,
     enesteBilde ? el('<span class="varsel">Krever to bilder</span>') : null, enesteBilde));
+  if (state.somModus && !enesteBilde) {
+    const omfang = el('<div class="segrad undre" role="group" aria-label="Hvor mye av nabobildene"></div>');
+    [['kant', 'Kanten', 'En stripe av bildet på hver side'],
+     ['naboer', 'Naboene', 'Hele bildet før og etter'],
+     ['alle', 'Alle', 'Hele serien på en rad']].forEach(([verdi, navn, forklaring]) => {
+      const b = el('<button data-nokkel="omfang-' + verdi + '" title="' + forklaring + '">' + navn + '</button>');
+      b.classList.toggle('aktiv', state.somOmfang === verdi);
+      b.setAttribute('aria-pressed', state.somOmfang === verdi ? 'true' : 'false');
+      b.onclick = () => { if (state.somOmfang !== verdi) { settSomOmfang(verdi); byggRutevindu(); } };
+      omfang.appendChild(b);
+    });
+    rutevindu.appendChild(omfang);
+    rutevindu.appendChild(el('<div class="varsel undre" style="margin-bottom:6px">Klikk på et nabobilde for å jobbe i det.</div>'));
+  }
   rutevindu.appendChild(valgrad('Snapping', state.hjelpelinjer, settHjelpelinjer));
   rutevindu.appendChild(el('<div class="skille"></div>'));
   rutevindu.appendChild(el('<div class="seksjon">Støttelinjer</div>'));
@@ -6034,6 +6684,7 @@ lerret.addEventListener('contextmenu', e => {
     punkter.push('-');
     punkter.push({ label: 'Ny tekst', gjor: () => document.getElementById('nytekst').onclick() });
     punkter.push({ label: 'Ny telefon', gjor: () => document.getElementById('nytelefon').onclick() });
+    punkter.push({ label: 'Ny Mac', gjor: () => document.getElementById('nymac').onclick() });
     punkter.push({ label: 'Ny grafikk', gjor: () => document.getElementById('nygrafikk').onclick() });
     punkter.push('-');
     punkter.push({ label: 'Merk alt', snarvei: KMD + 'A', gjor: () => {
@@ -6147,8 +6798,14 @@ window.addEventListener('keydown', e => {
   else if (e.key === 'ArrowDown') dy = steg;
   else return;
   e.preventDefault();
-  endre(() => { flokk.forEach(l => { l.x += dx; l.y += dy; }); });
-  speilHvisPaa(['x', 'y']);
+  endre(() => { flokk.forEach(l => { l.x += dx; l.y += dy; }); oppdaterLuft(flokk); });
+  speilHvisPaa(['x', 'y', 'luftOver']);
+  // The distances show for a moment, so you can nudge until the two numbers match
+  state._maal = avstandsmaal(flokk);
+  state._maalTil = Date.now() + 1500;
+  clearTimeout(state._maalTimer);
+  state._maalTimer = setTimeout(() => { if (!drag) state._maal = null; tegnSnart(); }, 1550);
+  tegnSnart();
 });
 
 /* =============================== Copy and paste ===============================
@@ -6174,6 +6831,7 @@ function kopierMerkede(klippUt) {
   state.utklipp = {
     merke: UTKLIPPSMERKE,
     versjon: state.prosjekt.versjon,   // phone sizes follow the version of the project they come from
+    tekstTopp: true,                   // text is placed by its top
     fraSlide: state.prosjekt.slides[state.prosjekt.aktiv] ? state.prosjekt.slides[state.prosjekt.aktiv].id : null,
     lag: JSON.parse(JSON.stringify(flokk)),
     bilder: bildekart
@@ -6198,12 +6856,18 @@ function settInnLag(pakke) {
   const sammeBilde = pakke.fraSlide === s.id;
   const nye = [];
   const gruppekart = {};
+  const idkart = {};
+  const kopier = [];
   endre(() => {
     pakke.lag.forEach(mal => {
       const k = JSON.parse(JSON.stringify(mal));
       k.id = uid();
-      // The role only comes along if the slide doesn't already have it
-      if (k.rolleId && s.lag.some(x => x.rolleId === k.rolleId)) { k.rolleId = null; k.avvik = {}; }
+      idkart[mal.id] = k.id;
+      kopier.push(k);
+      // Text from before texts were placed by their top
+      if (k.type === 'tekst' && !pakke.tekstTopp) k.y = Math.round(k.y - tekstOppsett(k).blokkH / 2);
+      // The role only comes along if this series has it and the slide doesn't already
+      if (k.rolleId && (!rollen(k.rolleId) || s.lag.some(x => x.rolleId === k.rolleId))) { k.rolleId = null; k.avvik = {}; }
       if (k.gruppe) {
         if (!gruppekart[k.gruppe]) gruppekart[k.gruppe] = uid();
         k.gruppe = gruppekart[k.gruppe];
@@ -6215,6 +6879,7 @@ function settInnLag(pakke) {
       s.lag.push(k);
       nye.push(k.id);
     });
+    kopier.forEach(k => { if (k.folgerId) { if (idkart[k.folgerId]) k.folgerId = idkart[k.folgerId]; else delete k.folgerId; } });
     state.merkede = nye;
     state.valgtLag = nye[nye.length - 1];
   }, { struktur: true, tving: true });
@@ -6259,10 +6924,14 @@ function dupliserMerkede() {
   if (!flokk.length || !s) return;
   const nye = [];
   const gruppekart = {};
+  const idkart = {};
+  const kopier = [];
   endre(() => {
     flokk.forEach(l => {
       const k = JSON.parse(JSON.stringify(l));
       k.id = uid(); k.x += 40; k.y += 40;
+      idkart[l.id] = k.id;
+      kopier.push(k);
       k.rolleId = null; k.avvik = {};      // a copy is its own layer, not the role
       if (k.gruppe) {
         if (!gruppekart[k.gruppe]) gruppekart[k.gruppe] = uid();
@@ -6271,6 +6940,7 @@ function dupliserMerkede() {
       s.lag.splice(s.lag.indexOf(l) + 1, 0, k);
       nye.push(k.id);
     });
+    kopier.forEach(k => { if (k.folgerId) { if (idkart[k.folgerId]) k.folgerId = idkart[k.folgerId]; else delete k.folgerId; } });
     state.merkede = nye;
     state.valgtLag = nye[nye.length - 1];
   }, { struktur: true, tving: true });
@@ -6424,7 +7094,7 @@ async function apneProsjektfil(fil) {
    back and forth returns you to exactly what you left - with the content you
    have now. */
 
-const GEOMETRI = ['x', 'y', 'str', 'bredde', 'hoyde', 'skala'];
+const GEOMETRI = ['x', 'y', 'str', 'bredde', 'hoyde', 'skala', 'luftOver'];
 
 function rammeFaktor(F) { return Math.min(F.w / RAMME.w, F.h / RAMME.h); }
 
@@ -6471,7 +7141,9 @@ function flyttMellomFormat(o, type, A, B) {
     o.bredde = klem(Math.round(o.bredde * k), 300, B.w);
   }
   if (type === 'grafikk') o.hoyde = Math.max(20, Math.round(o.hoyde * k));
+  if (typeof o.luftOver === 'number') o.luftOver = Math.round(o.luftOver * k);
   if (type === 'telefon') o.skala = klem(Math.round(o.skala * k * kRamme * 1000) / 1000, 0.1, 1.2);
+  if (type === 'mac') o.skala = klem(Math.round(o.skala * k * macFaktor(A) / macFaktor(B) * 1000) / 1000, 0.1, 1.2);
 }
 
 // Scales the whole composition from one format to another
@@ -6480,69 +7152,190 @@ function skalerTilFormat(A, B) {
   if (state.prosjekt.mal) state.prosjekt.mal.roller.forEach(r => flyttMellomFormat(r.felt, r.type, A, B));
 }
 
+// Within one series: the layout is remembered per format, or scaled the first time
+function byttInnenSerie(nytt) {
+  const p = state.prosjekt, gammelt = p.format;
+  const minne = p.formatminne[nytt];
+  husFormat(gammelt);
+  p.format = nytt;
+  if (minne) hentFormat(minne, FORMATER[gammelt], FORMATER[nytt]);
+  else skalerTilFormat(FORMATER[gammelt], FORMATER[nytt]);
+  const F = FORMATER[nytt];
+  p.slides.forEach(s => s.lag.forEach(l => {
+    if (l.type === 'tekst') l.bredde = klem(l.bredde, 300, F.w);
+  }));
+  return minne
+    ? 'Hentet frem oppsettet du hadde i dette formatet'
+    : 'Oppsettet er skalert til det nye formatet. Juster gjerne, det huskes til neste gang.';
+}
+
+// The first series for the other device: its own template, with the texts and the look of the old series
+function nySerieFra(gammel, format) {
+  const p = state.prosjekt;
+  const mal = nyMal(format);
+  mal.bakgrunn = kopiVerdi(gammel.mal.bakgrunn);
+  mal.roller.forEach(r => {
+    const g = r.type === 'tekst' && gammel.mal.roller.find(x => x.type === 'tekst' && x.navn === r.navn);
+    if (g) Object.keys(g.felt).forEach(f => { if (GEOMETRI.indexOf(f) < 0) r.felt[f] = kopiVerdi(g.felt[f]); });
+  });
+  p.format = format;
+  p.mal = mal;
+  p.mellomrom = BUTIKKMAAL[serieFor(format)][0].mellomrom;
+  p.slides = gammel.slides.map(gs => {
+    const s = { id: uid(), bakgrunn: kopiVerdi(gs.bakgrunn), lag: mal.roller.map(lagFraRolle) };
+    s.lag.forEach(l => {
+      const g = l.type === 'tekst' && gs.lag.find(x => x.type === 'tekst' && x.navn === l.navn);
+      if (g) { l.tekst = g.tekst; l.uthev = kopiVerdi(g.uthev); }
+    });
+    return s;
+  });
+  p.aktiv = klem(gammel.aktiv || 0, 0, p.slides.length - 1);
+}
+
 function byttFormat(nytt) {
   if (!FORMATER[nytt] || nytt === state.prosjekt.format) return;
-  const gammelt = state.prosjekt.format;
+  const p = state.prosjekt;
+  const fra = serieFor(p.format), til = serieFor(nytt);
+  const navn = { mac: 'Mac-serien', ios: 'serien for iPhone og iPad' };
+  let melding = '';
   endre(() => {
-    husFormat(gammelt);
-    state.prosjekt.format = nytt;
-    const minne = state.prosjekt.formatminne[nytt];
-    if (minne) hentFormat(minne, FORMATER[gammelt], FORMATER[nytt]);
-    else skalerTilFormat(FORMATER[gammelt], FORMATER[nytt]);
-    const F = FORMATER[nytt];
-    state.prosjekt.slides.forEach(s => s.lag.forEach(l => {
-      if (l.type === 'tekst') l.bredde = klem(l.bredde, 300, F.w);
-    }));
+    if (fra !== til) {
+      // Mac takes other screenshots: this series is put aside and the other device's is taken out
+      const lagret = p.serier[til];
+      p.serier[fra] = { format: p.format, slides: p.slides, mal: p.mal, aktiv: p.aktiv, mellomrom: p.mellomrom };
+      delete p.serier[til];
+      if (lagret) {
+        Object.assign(p, { format: lagret.format, slides: lagret.slides, mal: lagret.mal, aktiv: lagret.aktiv, mellomrom: lagret.mellomrom });
+        melding = 'Hentet frem ' + navn[til];
+      } else {
+        nySerieFra(p.serier[fra], nytt);
+        melding = (til === 'mac' ? 'Mac-serien' : 'Serien for iPhone og iPad') + ' har fått tekstene og utseendet fra ' +
+          navn[fra] + '. Legg til skjermbilder.';
+      }
+      nullstillMerking();
+      state.malUtvalg = [];
+    }
+    if (p.format !== nytt) melding = byttInnenSerie(nytt);
     fitCache.clear();
     telefonCache.clear();
+    macCache.clear();
     tekstOppsettCache.clear();
     settLerretstorrelse();
   }, { struktur: true, tving: true });
-  setStatus(state.prosjekt.formatminne[nytt]
-    ? 'Hentet frem oppsettet du hadde i dette formatet'
-    : 'Oppsettet er skalert til det nye formatet. Juster gjerne, det huskes til neste gang.');
+  setStatus(melding);
 }
 
 /* In seam mode the canvas is wider than the slide, and the neighboring slides
-   show at the edges with the real gap between them. This way you see the
-   transition while you work, instead of having to imagine it. */
-function kikkBredde() {
-  if (!state.somModus || state.prosjekt.slides.length < 2) return 0;
-  return Math.round(FMT().w * 0.22) + mellomromPx();
+   show beside it with the real gap between them. This way you see the
+   transition while you work, instead of having to imagine it.
+   `somOmfang` decides how much: a strip of each neighbor, both neighbors whole,
+   or the whole series in one row. Only the active slide can be edited; a click
+   on another slide makes it the active one. */
+const KIKK_MAKS_BREDDE = 16000;   // canvases wider than about 16k pixels fail in some browsers
+
+function harKikk() { const k = kikkSider(); return k.v + k.h > 0; }
+
+/* The layers in the other slides that a change will also reach get a quiet frame.
+   This is how you see that the headlines in every image are selected together:
+   select one, and the others follow when you move, scale or format it. */
+function tegnFolgere(ctx, kikk) {
+  const F = FMT();
+  const flokk = merkedeLag();
+  if (!flokk.length || state.rediger) return;
+  const i = state.prosjekt.aktiv;
+  const mottakere = malBilder();
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(-kikk.v, 0, F.w + kikk.v + kikk.h, F.h);
+  ctx.clip();
+  mottakere.forEach(s2 => {
+    const j = slideNr(s2);
+    const dx = (j - i) * steget();
+    if (dx + F.w < -kikk.v || dx > F.w + kikk.h) return;
+    flokk.forEach(l => {
+      if (!l.rolleId) return;
+      const m = s2.lag.find(x => x.rolleId === l.rolleId);
+      const h = m && m.synlig ? hitboks.get(m.id) : null;
+      if (!h) return;
+      ctx.save();
+      ctx.translate(dx, 0);
+      tegnRamme(ctx, hjorner(h), false);
+      ctx.restore();
+    });
+  });
+  ctx.restore();
+}
+
+function kikkSider() {
+  const n = state.prosjekt.slides.length;
+  if (!state.somModus || n < 2) return { v: 0, h: 0 };
+  const F = FMT();
+  const steg = steget();
+  if (state.somOmfang === 'naboer') return { v: steg, h: steg };
+  if (state.somOmfang === 'alle') {
+    // As many slides as the canvas can hold, with the active one as close to the middle as possible
+    const plass = Math.max(1, Math.min(n, Math.floor((KIKK_MAKS_BREDDE + mellomromPx()) / steg)));
+    const i = klem(state.prosjekt.aktiv || 0, 0, n - 1);
+    const forste = klem(i - Math.floor((plass - 1) / 2), 0, n - plass);
+    return { v: (i - forste) * steg, h: (forste + plass - 1 - i) * steg };
+  }
+  const k = Math.round(F.w * 0.22) + mellomromPx();
+  return { v: k, h: k };
 }
 
 function settLerretstorrelse() {
   const F = FMT();
-  const b = F.w + kikkBredde() * 2;
+  const k = kikkSider();
+  const b = F.w + k.v + k.h;
   if (lerret.width !== b) lerret.width = b;
   if (lerret.height !== F.h) lerret.height = F.h;
 }
 
-// Draws the neighboring slides at the edges, without hit boxes and without guides
+// The slide under a point outside the active slide, or -1. Gaps count as no slide.
+function slideVedPunkt(p) {
+  const F = FMT();
+  if (p.y < 0 || p.y > F.h || (p.x >= 0 && p.x <= F.w)) return -1;
+  const k = kikkSider();
+  if (p.x < -k.v || p.x > F.w + k.h) return -1;
+  const steg = steget();
+  const d = Math.floor(p.x / steg);
+  if (p.x - d * steg > F.w) return -1;          // in the gap
+  const j = slideNr(aktivSlide()) + d;
+  return state.prosjekt.slides[j] ? j : -1;
+}
+
+// Draws the other slides beside the active one, without hit boxes and without guides
 function tegnNaboer(ctx, kikk) {
   const F = FMT();
   const s = aktivSlide();
   const i = slideNr(s);
   const steg = steget();
-  // Neutral backdrop at the edges, so nothing shows through where the series ends
+  // Neutral backdrop around the slide, so nothing shows through in the gaps or where the series ends
   ctx.save();
   ctx.fillStyle = '#e9e8e2';
-  ctx.fillRect(-kikk, 0, kikk, F.h);
-  ctx.fillRect(F.w, 0, kikk, F.h);
+  ctx.fillRect(-kikk.v, 0, kikk.v, F.h);
+  ctx.fillRect(F.w, 0, kikk.h, F.h);
   ctx.restore();
-  [-1, 1].forEach(retning => {
-    const nabo = state.prosjekt.slides[i + retning];
-    if (!nabo) return;
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(retning < 0 ? -kikk : F.w, 0, kikk, F.h);
-    ctx.clip();
-    ctx.translate(retning * steg, 0);
-    const varSamler = samlerHitboks;
-    samlerHitboks = false;
-    try { renderSlide(ctx, nabo, 'rask'); } finally { samlerHitboks = varSamler; }
-    ctx.restore();
-  });
+  // The other slides' layers get hit boxes too (in their own slide's coordinates),
+  // so they can be clicked and framed when they follow the selection
+  const varSamler = samlerHitboks;
+  samlerHitboks = true;
+  try {
+    state.prosjekt.slides.forEach((nabo, j) => {
+      if (j === i) return;
+      const dx = (j - i) * steg;
+      // Each slide is cut at its own edge and at the edge of the canvas
+      const v = Math.max(dx, -kikk.v), h = Math.min(dx + F.w, F.w + kikk.h);
+      if (h <= v) return;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(v, 0, h - v, F.h);
+      ctx.clip();
+      ctx.translate(dx, 0);
+      renderSlide(ctx, nabo, 'rask');
+      ctx.restore();
+    });
+  } finally { samlerHitboks = varSamler; }
 }
 
 // The gap is drawn over everything, the way App Store cuts the slides apart
@@ -6554,9 +7347,29 @@ function tegnSomGap(ctx, kikk) {
   ctx.fillStyle = '#e9e8e2';
   if (state.prosjekt.slides[i - 1]) ctx.fillRect(-gap, 0, gap, F.h);
   if (state.prosjekt.slides[i + 1]) ctx.fillRect(F.w, 0, gap, F.h);
-  ctx.strokeStyle = 'rgba(28,30,26,.35)';
-  ctx.lineWidth = Math.max(2, F.w / 660);
-  ctx.strokeRect(0, 0, F.w, F.h);
+  // The slide under the pointer gets a faint frame, so you see it can be clicked
+  // Line widths in screen pixels, so they read the same however small the series is drawn
+  const r = lerret.getBoundingClientRect();
+  const px = r.width ? lerret.width / r.width : 1;
+  // A white line inside a dark one, so the frame shows on light and dark slides alike
+  const ring = (x, bredde, strek) => {
+    ctx.setLineDash(strek ? [7 * px, 5 * px] : []);
+    ctx.lineWidth = bredde * px;
+    ctx.strokeStyle = '#414b36';
+    ctx.strokeRect(x + bredde * px / 2, bredde * px / 2, F.w - bredde * px, F.h - bredde * px);
+    ctx.lineWidth = 1.5 * px;
+    ctx.strokeStyle = 'rgba(255,255,255,.9)';
+    ctx.strokeRect(x + (bredde + .75) * px, (bredde + .75) * px, F.w - (bredde * 2 + 1.5) * px, F.h - (bredde * 2 + 1.5) * px);
+    ctx.setLineDash([]);
+  };
+  if (state.somSvev >= 0 && state.prosjekt.slides[state.somSvev]) ring((state.somSvev - i) * steget(), 1.5, true);
+  // With whole slides beside it, the active one is marked clearly, so you see where you work
+  if (kikk.v + kikk.h > F.w) ring(0, 3, false);
+  else {
+    ctx.strokeStyle = 'rgba(28,30,26,.35)';
+    ctx.lineWidth = Math.max(2, F.w / 660);
+    ctx.strokeRect(0, 0, F.w, F.h);
+  }
   ctx.restore();
 }
 
@@ -6597,6 +7410,7 @@ function byggAltNaa() {
   if (state.rediger && (!finnLag(state.rediger.id) || state.valgtLag !== state.rediger.id)) stoppRedigering();
   settLerretstorrelse();      // the number of slides and the format may have changed
   byggTopp();
+  byggBildeseksjon();
   byggSlideliste();
   byggStripe();
   byggStorvisning();
@@ -6659,13 +7473,23 @@ document.getElementById('nytelefon').onclick = () => {
     merkLag(l.id);
   }, { struktur: true, tving: true });
 };
+document.getElementById('nymac').onclick = () => {
+  const s = aktivSlide();
+  if (!s) return;
+  const F = FMT();
+  endre(() => {
+    const l = nyttMaclag({ x: F.w / 2, y: F.h / 2 });
+    s.lag.push(l);
+    merkLag(l.id);
+  }, { struktur: true, tving: true });
+};
 document.getElementById('nytekst').onclick = () => {
   const s = aktivSlide();
   if (!s) return;
   const F = FMT();
   let ny = null;
   endre(() => {
-    ny = nyttTekstlag({ x: F.w / 2, y: 360 });
+    ny = nyttTekstlag({ x: F.w / 2, y: 234 });
     s.lag.push(ny);
     merkLag(ny.id);
   }, { struktur: true, tving: true });
@@ -6741,6 +7565,8 @@ async function start() {
     const st = parseInt(localStorage.getItem('asc-storhoyde'), 10);
     if (st >= 200 && st <= 1000) state.storHoyde = st;
     state.somModus = localStorage.getItem('asc-sommodus') === '1';
+    const so = localStorage.getItem('asc-somomfang');
+    if (so === 'kant' || so === 'naboer' || so === 'alle') state.somOmfang = so;
     const rn = JSON.parse(localStorage.getItem('asc-rutenett') || 'null');
     if (rn && typeof rn === 'object') Object.assign(state.rutenett, rn);
   } catch (e) { /* private mode */ }
@@ -6757,6 +7583,18 @@ async function start() {
   }
   rammerKlare = !feil;
 
+  // The fonts must be in place before a saved project is read: converting old text
+  // positions measures how many lines each text has
+  try {
+    if (document.fonts && document.fonts.load) {
+      const jobber = [];
+      FONTER.filter(f => f !== 'Systemfont').forEach(f => VEKTER.forEach(v =>
+        jobber.push(document.fonts.load(v[0] + ' 60px "' + f + '"').catch(() => {}))));
+      await Promise.race([Promise.all(jobber), new Promise(r => setTimeout(r, 4000))]);
+      fontVersjon++;
+      fontProve.clear();
+    }
+  } catch (e) { /* draws with what is there */ }
   let gjenopprettet = false;
   try { gjenopprettet = await gjenopprett(); } catch (e) { gjenopprettet = false; }
   if (!gjenopprettet || !state.prosjekt.slides.length) {
@@ -6780,11 +7618,6 @@ async function start() {
 }
 
 start();
-</script>
-<script>
-  // Sends only the app's base path to GoatCounter: no query string, hash or title, nothing stored on the device.
-  if (location.hostname === 'elzacka.github.io')
-    new Image().src = 'https://elzacka.goatcounter.com/count?p=' + encodeURIComponent('/fasade/') + '&rnd=' + Math.random().toString(36).slice(2, 7)
 </script>
 </body>
 </html>

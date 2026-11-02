@@ -1,18 +1,18 @@
 # Brukerveiledning for Fasade
 
-Fasade lager produktbildene App Store viser: En serie bilder med samme utseende,
-riktig størrelse og sømløse overganger.
+Fasade lager produktbildene App Store viser for iPhone, iPad og Mac: En serie
+bilder med samme utseende, riktig størrelse og sømløse overganger.
 
 **Innhold:** [Kom i gang](#kom-i-gang) · [Mal og unntak](#mal-og-unntak) ·
 [Overganger](#overganger) · [Plassering](#plassering) · [Tekst](#tekst) ·
-[Telefon og grafikk](#telefon-og-grafikk) · [Bakgrunn](#bakgrunn) ·
+[Telefon, Mac og grafikk](#telefon-mac-og-grafikk) · [Bakgrunn](#bakgrunn) ·
 [Sjekk serien](#sjekk-serien) · [Lagring](#lagring) ·
 [Knapper og snarveier](#knapper-og-snarveier)
 
 | Ord | Betyr |
 | --- | --- |
 | Bilde | Ett produktbilde i serien: Bilde 1, Bilde 2 og så videre. «Valgte bilder» og «Alle bilder» betyr alltid disse |
-| Skjermbilde | Skjermdumpen fra appen, inne i telefonrammen |
+| Skjermbilde | Skjermdumpen fra appen, inne i rammen til telefonen eller Macen |
 
 ## Kom i gang
 
@@ -44,6 +44,12 @@ riktig størrelse og sømløse overganger.
 - Et unntak blir stående selv om du endrer malen. Panelet viser hva som avviker.
 - «Følg malen igjen» fjerner unntaket. «Legg laget i malen» gjør det til ny
   standard for hele serien.
+- Lag ett bilde slik du vil ha det, og velg «Bruk som mal for serien» øverst i
+  panelet. Utseendet går ut til bildene som følger malen. Unntak du har laget i
+  dem, blir stående.
+- Ta av «Følger malen» for et bilde som skal se annerledes ut. Bildet beholder
+  utseendet sitt, og endringer i malen når ikke dit. Bildet er merket «Egen» i
+  listen. Huker du av igjen, får bildet utseendet fra malen.
 
 ## Overganger
 
@@ -54,17 +60,40 @@ riktig størrelse og sømløse overganger.
   «Endringer gjelder».
 - «I sømmen mot forrige» og «I sømmen mot neste» legger laget midt i overgangen.
 - Mellomrommet: 4,4 % i App Store på iPhone, 7,3 % i nettleseren, eller «Midt
-  imellom». En overgang treffer perfekt bare ett av stedene.
-- Se overgangene mens du jobber: «Vis overgangene» i «Visning».
+  imellom». En overgang treffer perfekt bare ett av stedene. For Mac er
+  mellomrommet 4,5 % i nettleseren.
+- Se nabobildene mens du jobber: Slå på «Vis nabobildene» i «Visning», og velg
+  hvor mye du vil se. «Kanten» viser en stripe av bildet på hver side,
+  «Naboene» viser hele bildet før og etter, og «Alle» viser hele serien på en
+  rad. Du jobber i bildet med ramme rundt. Klikk på et lag i et annet bilde, så
+  jobber du i det bildet med det laget valgt.
+- Velger du et lag, får de tilsvarende lagene i de andre bildene en svak ramme.
+  De følger med når du flytter, skalerer eller formaterer, så lenge «Endringer
+  gjelder» står på «Hele serien» eller «Valgte bilder». Med «Bare dette» endrer
+  du bare bildet du jobber i.
 - Se serien slik App Store viser den: «Stripe under» i «Visning», så «Vis stort».
 
 ## Plassering
 
+- Y for en tekst er toppen av første linje. Brytes teksten over flere linjer,
+  vokser den nedover, og toppen blir stående. Samme Y gir samme topp i alle
+  bildene.
+- I en gruppe følger et lag laget over seg: Det holder samme avstand under det.
+  Brytes overskriften over en linje til, flytter underteksten seg ned. Flytter du
+  underteksten alene, endrer du avstanden.
+- Grupperer du lag i et bilde som følger malen, grupperes de samme lagene i de
+  andre bildene som følger malen. Det samme gjelder når du løser opp gruppen.
 - Når du drar et lag, fester det seg til midten av bildet, til andre lag og til
   margen.
+- Det fester seg også der avstanden er lik over og under laget (og til venstre
+  og høyre). Mangler det noe på den ene siden, regnes bildekanten.
 - Mens du drar, ser du avstanden til naboene i tall. Lik avstand blir grønn.
-- Støttelinjer og snapping slår du av og på i «Visning». Støttelinjene kommer
-  aldri med i bildene du laster ned.
+  Flytter du med piltastene, vises tallene en liten stund etterpå.
+- Vil du ha lik avstand for overskrift og undertekst sammen, merker du begge med
+  Skift-klikk og drar dem som én blokk.
+- «Snapping» i «Visning» slår av og på alt som fester seg. «Snapp til
+  støttelinjene» gjelder bare linjene du har slått på under «Støttelinjer».
+  Støttelinjene kommer aldri med i bildene du laster ned.
 - Merk flere lag med Skift-klikk eller ved å dra en ramme rundt dem. Klikker du
   på et lag i en gruppe, merkes hele gruppen.
 
@@ -81,7 +110,7 @@ riktig størrelse og sømløse overganger.
 > For stor avstand mellom ordene? Monospace-skrifter som DM Mono har et nesten
 > tre ganger så bredt mellomrom. Sett «Ordavstand» til 50–60 %.
 
-## Telefon og grafikk
+## Telefon, Mac og grafikk
 
 - «Velg skjermbilde» i panelet. Ni rammefarger, og størrelse og utsnitt for hver
   telefon.
@@ -120,6 +149,20 @@ riktig størrelse og sømløse overganger.
 > [!TIP]
 > Bruk små vinkler i «Tilt i 3D». Store vinkler gjør skjermbildet vanskelig å lese.
 
+### Mac
+
+- Velg «Mac» som format øverst. Bildene blir 2880 × 1800 piksler, den største
+  størrelsen App Store Connect tar imot for Mac.
+- Mac har sin egen serie. Første gang du velger Mac, får serien tekstene og
+  utseendet fra serien for iPhone og iPad. Den serien står urørt til du bytter
+  tilbake.
+- Rammen er en MacBook Air 13 tommer. Velg farge og størrelse i panelet.
+- Ta skjermbildet av hele skjermen med <kbd>⇧</kbd> <kbd>⌘</kbd> <kbd>3</kbd>.
+  Et skjermbilde fra en MacBook Air 13 tommer passer rammen, uansett
+  skjermoppløsning. «Sjekk serien» sier fra når skjermbildet har en annen form
+  enn skjermen.
+- «+ Mac» legger en Mac inn i alle formater, også ved siden av en telefon.
+
 ## Bakgrunn
 
 - Ensfarget, gradient, bilde eller gjennomsiktig. Gjennomsiktig blir hvit når du
@@ -141,17 +184,18 @@ Sjekken finner:
 - Svak kontrast mellom tekst og bakgrunn
 - Gjennomsiktig bakgrunn
 - Overganger som ikke går opp
-- En overskrift som blir for liten i søkeresultatet
+- En overskrift som blir for liten i søkeresultatet, for iPhone og iPad
 - Statuslinjer Fasade ikke kan skjule eller bytte ut
 
-En telefon som går ut over kanten, regnes som et bevisst utsnitt.
+En telefon eller Mac som går ut over kanten, regnes som et bevisst utsnitt.
 
 ## Lagring
 
 - Fasade lagrer alt i nettleseren, også bildene.
 - «Lagre» gir filen `<appnavn>-fasade.json`. «Åpne» henter den inn igjen, også
   på en annen maskin.
-- Bytter du mellom iPhone og iPad, husker Fasade oppsettet i hvert format.
+- Fasade husker oppsettet i hvert format når du bytter mellom iPhone og iPad.
+  Mac har sin egen serie, se [Mac](#mac).
 
 > [!IMPORTANT]
 > Lagringen følger adressen. Lenken og en lokal fil har hver sin lagring. Flytt
