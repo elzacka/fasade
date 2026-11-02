@@ -20,7 +20,7 @@ bilder med samme utseende, riktig størrelse og sømløse overganger.
    den lokalt på Mac eller PC: Last ned ZIP-filen fra GitHub (<kbd>Code</kbd> →
    <kbd>Download ZIP</kbd>), pakk den ut og åpne `fasade.html` i Chrome eller Edge.
 2. **Velg format og skriv appnavnet** øverst. Appnavnet blir filnavnet, for
-   eksempel `appnavn-1320x2868-1.png`.
+   eksempel `appnavn-1206x2622-1.png`.
 3. **«+ Legg til bilder»**: Du får ett bilde per skjermbilde du velger.
 4. **«Innhold»**: Skriv overskrift og undertekst for hvert bilde.
 5. **Juster**: Klikk på et element i bildet og endre det i panelet til høyre.
@@ -116,9 +116,8 @@ bilder med samme utseende, riktig størrelse og sømløse overganger.
   telefon.
 - Under «Modell» velger du iPhone 17 Pro eller iPhone 18 Pro. Velg modellen du
   tok skjermbildet på, så får rammen riktig Dynamic Island.
-- Ta skjermbildene på en iPhone 17 Pro eller 18 Pro, også når formatet er 6,9
-  tommer. Skjermbilder fra en Pro Max passer ikke til rammen, og «Sjekk serien»
-  sier fra.
+- Ta skjermbildene på en iPhone 17 Pro eller 18 Pro. Skjermbilder fra en Pro
+  Max passer ikke til rammen, og «Sjekk serien» sier fra.
 - «Sjekk serien» ser ikke om du har valgt feil modell. iPhone 17 Pro og 18 Pro
   tar skjermbilder i samme størrelse.
 - «+ Grafikk» legger inn en logo eller et symbol. «Ensfarget» farger det i én
@@ -186,16 +185,22 @@ Sjekken finner:
 - Overganger som ikke går opp
 - En overskrift som blir for liten i søkeresultatet, for iPhone og iPad
 - Statuslinjer Fasade ikke kan skjule eller bytte ut
+- Grafikk uten bilde
+- Mer enn ti bilder i serien
 
 En telefon eller Mac som går ut over kanten, regnes som et bevisst utsnitt.
 
 ## Lagring
 
-- Fasade lagrer alt i nettleseren, også bildene.
+- Fasade lagrer alt i nettleseren, også bildene. Nettleseren kan slette det,
+  for eksempel når du tømmer nettleserdata. Safari kan slette det etter sju
+  dager uten bruk. Lagre arbeidet som fil med «Lagre».
 - «Lagre» gir filen `<appnavn>-fasade.json`. «Åpne» henter den inn igjen, også
   på en annen maskin.
 - Fasade husker oppsettet i hvert format når du bytter mellom iPhone og iPad.
   Mac har sin egen serie, se [Mac](#mac).
+- Et prosjekt i formatet iPhone 6,9 tommer blir skalert til 6,3 tommer når du
+  åpner det. Det er størrelsen App Store Connect tar imot for iPhone.
 
 > [!IMPORTANT]
 > Lagringen følger adressen. Lenken og en lokal fil har hver sin lagring. Flytt
@@ -213,7 +218,7 @@ En telefon eller Mac som går ut over kanten, regnes som et bevisst utsnitt.
 | Gjør | Mac | PC |
 | --- | --- | --- |
 | Angre | <kbd>⌘</kbd> <kbd>Z</kbd> | <kbd>Ctrl</kbd> <kbd>Z</kbd> |
-| Gjør om | <kbd>⇧</kbd> <kbd>⌘</kbd> <kbd>Z</kbd> | <kbd>Skift</kbd> <kbd>Ctrl</kbd> <kbd>Z</kbd> |
+| Gjør om | <kbd>⇧</kbd> <kbd>⌘</kbd> <kbd>Z</kbd> | <kbd>Skift</kbd> <kbd>Ctrl</kbd> <kbd>Z</kbd> eller <kbd>Ctrl</kbd> <kbd>Y</kbd> |
 | Kopier, klipp ut, lim inn | <kbd>⌘</kbd> <kbd>C</kbd> <kbd>X</kbd> <kbd>V</kbd> | <kbd>Ctrl</kbd> <kbd>C</kbd> <kbd>X</kbd> <kbd>V</kbd> |
 | Dupliser | <kbd>⌘</kbd> <kbd>D</kbd> | <kbd>Ctrl</kbd> <kbd>D</kbd> |
 | Merk alle lag | <kbd>⌘</kbd> <kbd>A</kbd> | <kbd>Ctrl</kbd> <kbd>A</kbd> |

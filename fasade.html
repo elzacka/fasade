@@ -80,8 +80,8 @@
 }
 :root {
   --gronn: #414b36; --gronn-mork: #333c28; --gronn-lys: #f2f4ee;
-  --blekk: #1c1e1a; --gra: #7c7a70; --gra-lys: #adaba0;
-  --linje: #e0ded4; --linje-svak: #efede5; --flate: #faf9f6; --bakteppe: #e9e8e2;
+  --blekk: #1c1e1a; --gra: #68665c; --gra-lys: #75736a;
+  --linje: #e0ded4; --linje-felt: #949285; --linje-svak: #efede5; --flate: #faf9f6; --bakteppe: #e9e8e2;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; }
@@ -133,7 +133,7 @@ input, textarea, select { font-family: inherit; }
 #topp .skille { width: 1px; height: 24px; background: var(--linje-svak); margin: 0 2px; }
 
 #topp select {
-  height: 32px; border: 1px solid var(--linje); border-radius: 8px; background: var(--flate);
+  height: 32px; border: 1px solid var(--linje-felt); border-radius: 8px; background: var(--flate);
   font-size: 12.5px; color: var(--blekk); padding: 0 6px; max-width: 168px;
 }
 .tknapp {
@@ -148,7 +148,7 @@ input, textarea, select { font-family: inherit; }
 .tknapp:disabled:hover { border-color: var(--linje); }
 #status {
   position: fixed; left: 50%; top: 58px; transform: translate(-50%, -8px);
-  z-index: 60; max-width: 460px; padding: 9px 15px; border-radius: 9px;
+  z-index: 1400; max-width: 460px; padding: 9px 15px; border-radius: 9px;
   background: rgba(28, 30, 26, .93); color: #f6f5f1; font-size: 12.5px; line-height: 1.4;
   box-shadow: 0 6px 20px rgba(0,0,0,.28);
   opacity: 0; pointer-events: none; transition: opacity .16s ease, transform .16s ease;
@@ -174,7 +174,7 @@ input, textarea, select { font-family: inherit; }
 .slidekort .navn { font-size: 11px; font-weight: 600; color: #35342f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .slidekort .rad { display: flex; gap: 3px; }
 .miniknapp {
-  flex: none; width: 24px; height: 22px; border: 0; border-radius: 6px; background: transparent;
+  flex: none; width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent;
   color: var(--gra-lys); font-size: 12px; line-height: 1; padding: 0;
 }
 .miniknapp:hover { background: #f5f3ec; color: var(--gronn); }
@@ -200,7 +200,7 @@ input, textarea, select { font-family: inherit; }
 /* ---- Right: layers and properties ---- */
 #panel {
   flex: none; width: 316px; background: #fff; border-left: 1px solid var(--linje-svak);
-  overflow-y: auto; padding: 14px 14px 60px; display: flex; flex-direction: column; gap: 16px;
+  overflow-y: auto; scrollbar-gutter: stable; padding: 14px 14px 60px; display: flex; flex-direction: column; gap: 16px;
 }
 #panel .seksjon { font-size: 11px; font-weight: 700; letter-spacing: .05em; color: var(--gra-lys); margin-bottom: 8px; }
 .lagrad {
@@ -212,12 +212,12 @@ input, textarea, select { font-family: inherit; }
 .lagrad .lagnavn { flex: 1; min-width: 0; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lagrad .lagtype { flex: none; font-size: 10px; color: var(--gra-lys); }
 .lagrad .oye { flex: none; width: 26px; height: 24px; border: 0; background: transparent; border-radius: 6px; color: var(--gronn); font-size: 13px; padding: 0; }
-.lagrad .oye.av { color: #d3d1c6; }
+.lagrad .oye.av { color: var(--gra-lys); }
 .lagrad .oye:hover { background: #f5f3ec; }
 .lagknapper { display: flex; gap: 6px; margin-bottom: 8px; }
 .lagknapper button {
-  flex: 1; height: 30px; border: 1px solid var(--linje); border-radius: 8px; background: var(--flate);
-  font-size: 11.5px; font-weight: 600; color: var(--gronn);
+  flex: 1; min-width: 0; height: 30px; padding: 0 4px; border: 1px solid var(--linje); border-radius: 8px; background: var(--flate);
+  font-size: 11.5px; font-weight: 600; color: var(--gronn); white-space: nowrap;
 }
 .lagknapper button:hover { border-color: var(--gronn); }
 
@@ -226,25 +226,25 @@ input, textarea, select { font-family: inherit; }
 .skyvrad .topplinje { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--gra); gap: 8px; align-items: center; }
 .skyvrad .topplinje .verdi { font-variant-numeric: tabular-nums; color: var(--gra-lys); }
 .tilbakestill {
-  flex: none; width: 19px; height: 19px; padding: 0; border: 0; border-radius: 6px;
+  flex: none; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px;
   background: #f0f2ea; color: var(--gronn); font-size: 12px; line-height: 1;
 }
 .tilbakestill:hover { background: #dde3d3; }
 input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 18px; background: transparent; cursor: pointer; }
-input[type=range]::-webkit-slider-runnable-track { height: 3px; background: #dddbd1; border-radius: 2px; }
+input[type=range]::-webkit-slider-runnable-track { height: 3px; background: var(--linje-felt); border-radius: 2px; }
 input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; margin-top: -6px; border-radius: 50%; background: var(--gronn); border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35); }
 input[type=color] { -webkit-appearance: none; appearance: none; border: 0; background: none; width: 38px; height: 28px; padding: 0; cursor: pointer; flex: none; }
 input[type=color]::-webkit-color-swatch-wrapper { padding: 0; }
-input[type=color]::-webkit-color-swatch { border: 1px solid #dddbd1; border-radius: 7px; }
+input[type=color]::-webkit-color-swatch { border: 1px solid var(--linje-felt); border-radius: 7px; }
 input[type=text], input[type=number] {
-  height: 30px; padding: 0 9px; border: 1px solid var(--linje); border-radius: 8px;
+  height: 30px; padding: 0 9px; border: 1px solid var(--linje-felt); border-radius: 8px;
   font-size: 12.5px; color: var(--blekk); background: var(--flate); min-width: 0;
 }
 textarea {
-  width: 100%; padding: 9px 10px; border: 1px solid var(--linje); border-radius: 9px;
+  width: 100%; padding: 9px 10px; border: 1px solid var(--linje-felt); border-radius: 9px;
   font-size: 13px; line-height: 1.4; color: var(--blekk); background: var(--flate); resize: vertical;
 }
-select.felt { height: 30px; border: 1px solid var(--linje); border-radius: 8px; font-size: 12.5px; background: var(--flate); color: var(--blekk); padding: 0 8px; width: 100%; }
+select.felt { height: 30px; border: 1px solid var(--linje-felt); border-radius: 8px; font-size: 12.5px; background: var(--flate); color: var(--blekk); padding: 0 8px; width: 100%; }
 .segrad { display: flex; gap: 6px; }
 .segrad button {
   flex: 1; min-width: 0; height: 30px; border-radius: 9px; font-size: 12px; font-weight: 600;
@@ -312,6 +312,7 @@ select.felt { height: 30px; border: 1px solid var(--linje); border-radius: 8px; 
 /* ---- View window: overview, transitions, snapping and guides ---- */
 #rutevindu {
   position: fixed; z-index: 1250; display: none; width: 268px; padding: 12px;
+  max-height: calc(100vh - 64px); overflow-y: auto;
   background: #fff; border: 1px solid var(--linje); border-radius: 13px;
   box-shadow: 0 16px 44px rgba(28,30,26,.24);
 }
@@ -350,7 +351,6 @@ select.felt { height: 30px; border: 1px solid var(--linje); border-radius: 8px; 
 #bildevalg .bilderad .merkelapp { font-size: 12px; line-height: 1.3; min-width: 0; }
 #bildevalg .bilderad .merkelapp .liten { display: block; font-size: 10.5px; color: var(--gra-lys);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.allevalg .hvilke { text-decoration: underline dotted; text-underline-offset: 2px; }
 
 /* ---- Right-click menu ---- */
 #kontekstmeny {
@@ -406,7 +406,7 @@ body.vannrett #hint { display: none; }
   position: absolute; left: 50%; transform: translateX(-50%); bottom: 5px; display: none; gap: 2px;
   background: rgba(255,255,255,.94); border-radius: 8px; padding: 2px; box-shadow: 0 2px 10px rgba(0,0,0,.18);
 }
-.stripekort:hover .verktoy { display: flex; }
+.stripekort:hover .verktoy, .stripekort:focus-within .verktoy { display: flex; }
 .somrom { flex: none; position: relative; }
 /* The gap is empty, the way the store shows it. If the transition doesn't line up,
    it turns red, and an explanation appears below the strip. */
@@ -488,19 +488,6 @@ body.vannrett #hint { display: none; }
 #storrad canvas { display: block; background: #eceae2; }
 #storvisning .fot { flex: none; font-size: 11.5px; color: var(--gra); margin-top: 10px; }
 
-/* ---- The «Endre på alle» option next to each setting ---- */
-.innstrad { display: flex; align-items: center; gap: 7px; }
-.innstrad > .innstfelt { flex: 1; min-width: 0; }
-.allevalg {
-  flex: none; display: flex; align-items: center; gap: 3px; padding: 4px 5px;
-  font-size: 10px; font-weight: 700; letter-spacing: .03em;
-  color: var(--gra-lys); border: 1px solid var(--linje-svak); border-radius: 7px;
-  cursor: pointer; user-select: none; align-self: center;
-}
-.allevalg:hover { border-color: var(--gronn); color: var(--gronn); }
-.allevalg.pa { color: var(--gronn); border-color: var(--gronn); background: var(--gronn-lys); }
-.allevalg input { width: 12px; height: 12px; margin: 0; accent-color: var(--gronn); }
-
 /* ---- Highlighted words ---- */
 .uthevkort { border: 1px solid var(--linje-svak); border-radius: 10px; background: var(--flate); padding: 7px 9px; }
 .uthevkort > summary {
@@ -510,7 +497,7 @@ body.vannrett #hint { display: none; }
 .uthevkort > summary::-webkit-details-marker { display: none; }
 .uthevkort > summary .prikk { width: 11px; height: 11px; border-radius: 50%; flex: none; border: 1px solid rgba(0,0,0,.18); }
 .uthevkort > summary .ordet { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.uthevkort > summary .fjern { flex: none; width: 22px; height: 20px; border: 0; border-radius: 6px; background: transparent; color: var(--gra-lys); font-size: 12px; padding: 0; }
+.uthevkort > summary .fjern { flex: none; width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--gra-lys); font-size: 12px; padding: 0; }
 .uthevkort > summary .fjern:hover { background: #f5f3ec; color: #9b2c2c; }
 .uthevkort .innhold { display: flex; flex-direction: column; gap: 9px; margin-top: 9px; }
 
@@ -551,9 +538,9 @@ body.vannrett #hint { display: none; }
       <span class="navn">Fasade <span class="versjon" id="versjon"></span></span>
       <span class="undertittel">Produktbilder til App Store</span>
     </div>
-    <select id="formatvalg" title="Størrelsen på det ferdige bildet"></select>
-    <input type="text" id="appnavn" style="width:104px" spellcheck="false" placeholder="Appnavn"
-           title="Navnet på appen. Brukes i filnavnet når du laster ned, for eksempel appnavn-1320x2868-1.png">
+    <select id="formatvalg" aria-label="Format" title="Størrelsen på det ferdige bildet"></select>
+    <input type="text" id="appnavn" aria-label="Appnavn" style="width:104px" spellcheck="false" placeholder="Appnavn"
+           title="Navnet på appen. Brukes i filnavnet når du laster ned, for eksempel appnavn-1206x2622-1.png">
     <span class="skille"></span>
     <button class="tknapp" id="innholdknapp" title="Fyll ut tekst og skjermbilder for hele serien">Innhold</button>
     <button class="tknapp" id="sjekkknapp" title="Se etter det App Store kommer til å vise frem som feil">Sjekk serien</button>
@@ -569,10 +556,9 @@ body.vannrett #hint { display: none; }
     <button class="tknapp" id="apneprosjekt" title="Åpne en prosjektfil">Åpne</button>
     </div>
     <div class="topphoyre">
-      <button class="tknapp primar" id="lastned" title="Last ned dette skjermbildet som PNG">Last ned</button>
+      <button class="tknapp primar" id="lastned" title="Last ned dette bildet som PNG">Last ned</button>
       <button class="tknapp" id="lastnedalle" title="Last ned hele serien som PNG-er">Alle bilder</button>
     </div>
-    <div id="status"></div>
   </div>
   <div id="hoved">
     <div id="serier">
@@ -581,13 +567,13 @@ body.vannrett #hint { display: none; }
       <div id="slideliste" style="display:flex;flex-direction:column;gap:8px"></div>
     </div>
     <div id="midt">
-      <div id="lerretboks"><canvas id="lerret" width="1320" height="2868"></canvas></div>
+      <div id="lerretboks"><canvas id="lerret" width="1206" height="2622"></canvas></div>
       <div id="bunnstripe">
         <div class="stripeverktoy">
           <span class="merke">Serien</span>
           <button class="minknapp" id="stripenytt">+ Legg til bilder</button>
-          <span class="gruppe"><span class="tall">Størrelse</span><input type="range" id="stripestr" min="90" max="440" step="10"></span>
-          <span class="gruppe"><span class="tall">Mellomrom</span><input type="range" id="stripegap" min="0" max="14" step="0.1"><span class="tall" id="gapverdi"></span></span>
+          <span class="gruppe"><span class="tall">Størrelse</span><input type="range" id="stripestr" aria-label="Størrelse" min="90" max="440" step="10"></span>
+          <span class="gruppe"><span class="tall">Mellomrom</span><input type="range" id="stripegap" aria-label="Mellomrom" min="0" max="14" step="0.1"><span class="tall" id="gapverdi"></span></span>
           <span class="gruppe" id="gapvalg"></span>
           <button class="minknapp" id="stripestor">Vis stort</button>
         </div>
@@ -616,32 +602,33 @@ body.vannrett #hint { display: none; }
     </div>
   </div>
 </div>
+<div id="status" role="status" aria-live="polite"></div>
 <input type="file" id="filvelger" style="display:none">
 <textarea id="tekstinn" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="off"></textarea>
 <div id="tekstverktoy"></div>
 <div id="kontekstmeny"></div>
 <div id="rutevindu" role="group" aria-label="Visning"></div>
-<div id="bildevalg"></div>
-<div id="sjekkvisning">
+<div id="bildevalg" role="dialog"></div>
+<div id="sjekkvisning" role="dialog" aria-modal="true" aria-labelledby="sjekktittel">
   <div class="topp">
-    <span class="tittel">Sjekk før publisering</span>
+    <span class="tittel" id="sjekktittel">Sjekk før publisering</span>
     <button class="tknapp lukk" id="sjekklukk">Lukk</button>
   </div>
   <div id="sjekkliste"></div>
 </div>
-<div id="innholdsvisning">
+<div id="innholdsvisning" role="dialog" aria-modal="true" aria-labelledby="innholdstittel">
   <div class="topp">
-    <span class="tittel">Innhold i serien</span>
+    <span class="tittel" id="innholdstittel">Innhold i serien</span>
     <span class="varsel" style="max-width:520px">Her fyller du ut tekst og skjermbilder for en ny versjon. Utseendet ligger i malen og står urørt.</span>
     <button class="tknapp lukk" id="innholdlukk">Lukk</button>
   </div>
   <div id="innholdsrad"></div>
 </div>
-<div id="storvisning">
+<div id="storvisning" role="dialog" aria-modal="true" aria-labelledby="stortittel">
   <div class="topp">
-    <span class="tittel">Slik ser serien ut i App Store</span>
+    <span class="tittel" id="stortittel">Slik ser serien ut i App Store</span>
     <span class="gruppe" id="storhvor"></span>
-    <span class="gruppe"><span class="tall">Størrelse</span><input type="range" id="storstr" min="200" max="1000" step="20"></span>
+    <span class="gruppe"><span class="tall">Størrelse</span><input type="range" id="storstr" aria-label="Størrelse" min="200" max="1000" step="20"></span>
     <span class="gruppe" id="storgapvalg"></span>
     <span class="tall" id="storgapverdi"></span>
     <button class="tknapp lukk" id="storlukk">Lukk</button>
@@ -656,10 +643,14 @@ body.vannrett #hint { display: none; }
 /* =============================== Foundation =============================== */
 
 const FORMATER = {
-  iphone69: { w: 1320, h: 2868, navn: 'iPhone 6,9 tommer', helt: 'iPhone 6,9 tommer - 1320 x 2868', serie: 'ios' },
+  iphone63: { w: 1206, h: 2622, navn: 'iPhone 6,3 tommer', helt: 'iPhone 6,3 tommer - 1206 x 2622', serie: 'ios' },
   ipad13:   { w: 2064, h: 2752, navn: 'iPad 13 tommer', helt: 'iPad 13 tommer - 2064 x 2752', serie: 'ios' },
   mac:      { w: 2880, h: 1800, navn: 'Mac', helt: 'Mac - 2880 x 1800', serie: 'mac' }
 };
+// Formats in projects up to version 1.4.0, kept to convert them (see fraIphone69)
+const UTGATTE_FORMATER = { iphone69: { w: 1320, h: 2868 } };
+function formatMaal(id) { return FORMATER[id] || UTGATTE_FORMATER[id]; }
+
 // Formats with the same `serie` share one series; Mac takes other screenshots than iPhone and iPad
 function serieFor(format) { return FORMATER[format].serie; }
 
@@ -753,7 +744,7 @@ const HJORNE = 0.045;      // the rounding of the screenshots in the store
 const EKSPORTGRUNN = '#ffffff';
 
 // Semantic version (MAJOR.MINOR.PATCH); the README says when each part goes up
-const VERSJON = '1.4.0';
+const VERSJON = '1.5.0';
 
 // Shortcut labels: ⌘ and ⇧ on a Mac, Ctrl+ and Skift+ elsewhere
 const ER_MAC = !!navigator.platform && /Mac/i.test(navigator.platform);
@@ -927,6 +918,16 @@ function lagFraRolle(rolle) {
   return l;
 }
 
+// A logo or symbol in the template is the same picture in every slide
+function lagFraRolleMedBilde(rolle) {
+  const l = lagFraRolle(rolle);
+  if (rolle.type === 'grafikk') {
+    const m = state.prosjekt.slides.reduce((f, s) => f || s.lag.find(x => x.rolleId === rolle.id && x.bildeId), null);
+    if (m) l.bildeId = m.bildeId;
+  }
+  return l;
+}
+
 function rollen(rolleId) {
   const m = state.prosjekt.mal;
   return m && rolleId ? m.roller.find(r => r.id === rolleId) || null : null;
@@ -955,13 +956,15 @@ function nyMal(format) {
   // buttons outside the default 7 % margin.
   const skala = 0.84;
   const hoyde = RAMME.h * Math.min(F.w / RAMME.w, F.h / RAMME.h) * skala;
+  // The pixel values are for a slide 1320 px wide; the narrower iPhone scales them down
+  const k = Math.min(1, F.w / 1320), px = v => Math.round(v * k);
   return {
     bakgrunn: nyBakgrunn(),
     roller: [
-      nyRolle(nyttTelefonlag({ x: midtX, y: 760 + hoyde / 2, skala: skala })),
+      nyRolle(nyttTelefonlag({ x: midtX, y: px(760) + hoyde / 2, skala: skala })),
       // Text is placed by its top (see tekstMidtY)
-      nyRolle(nyttTekstlag({ navn: 'Undertekst', str: 56, vekt: 500, y: 592, x: midtX })),
-      nyRolle(nyttTekstlag({ navn: 'Overskrift', x: midtX, y: 234 }))
+      nyRolle(nyttTekstlag({ navn: 'Undertekst', str: px(56), vekt: 500, y: px(592), x: midtX, bredde: px(1100) })),
+      nyRolle(nyttTekstlag({ navn: 'Overskrift', str: px(118), x: midtX, y: px(234), bredde: px(1100) }))
     ]
   };
 }
@@ -971,7 +974,7 @@ function nySlide(format) {
   const s = {
     id: uid(),
     bakgrunn: Object.assign(kopiVerdi(mal.bakgrunn), { avvik: {} }),
-    lag: mal.roller.map(lagFraRolle)
+    lag: mal.roller.map(lagFraRolleMedBilde)
   };
   s.lag.forEach(l => {
     if (l.type === 'tekst' && l.navn === 'Undertekst') l.tekst = EKSEMPEL_UNDERTEKST;
@@ -983,7 +986,7 @@ const state = {
   prosjekt: {
     versjon: 4,
     tekstTopp: true,     // text layers are placed by their top, not their center (see tilTekstTopp)
-    format: 'iphone69',
+    format: 'iphone63',
     appnavn: 'app',
     aktiv: 0,
     // The gap App Store shows between the screenshots, in percent of the image width.
@@ -1020,6 +1023,7 @@ const state = {
     snapp: true
   },
   angre: [], gjor: [],
+  angreSteg: 0,          // counts undo steps and undos, so a deferred step knows if another came first
   sisteMerke: 0
 };
 
@@ -1076,7 +1080,29 @@ function normaliserProsjekt(p) {
   // Needs the silhouette; without it the phones cannot be drawn, and the project converts later
   if ((p.versjon || 0) < 4 && kontur) tilVersjon4(p);
   if (!p.tekstTopp) tilTekstTopp(p);
+  fraIphone69(p);
   return p;
+}
+
+// App Store Connect takes iPhone screenshots at 6,3 inches. A 6,9 inch series is scaled
+// to it, in the slides, the template, a series put aside and the layout kept for the format.
+function fraIphone69(p) {
+  const A = UTGATTE_FORMATER.iphone69, B = FORMATER.iphone63;
+  const serier = [p].concat(Object.values(p.serier));
+  const typer = new Map();
+  serier.forEach(se => (se.slides || []).forEach(s => (s.lag || []).forEach(l => typer.set(l.id, l.type))));
+  serier.forEach(se => {
+    if (se.format !== 'iphone69') return;
+    (se.slides || []).forEach(s => (s.lag || []).forEach(l => flyttMellomFormat(l, l.type, A, B)));
+    if (se.mal) se.mal.roller.forEach(r => flyttMellomFormat(r.felt, r.type, A, B));
+    se.format = 'iphone63';
+  });
+  const minne = p.formatminne.iphone69;
+  if (!minne) return;
+  Object.keys(minne.lag || {}).forEach(id => flyttMellomFormat(minne.lag[id], typer.get(id), A, B));
+  if (minne.mal) minne.mal.roller.forEach(r => flyttMellomFormat(r.felt, r.type, A, B));
+  p.formatminne.iphone63 = minne;
+  delete p.formatminne.iphone69;
 }
 
 // The project, or a series put aside for another device in `serier`
@@ -1311,29 +1337,68 @@ function merketBoks() {
 
 /* ------- Undo / redo ------- */
 
-function merk(tving) {
+// A control dragged continuously is one undo step: the state before the first input, recorded at change
+let ventendeSteg = null;      // closes the step of a control still being used, see somEttSteg
+function lukkVentendeSteg() {
+  const f = ventendeSteg;
+  ventendeSteg = null;
+  if (f) f();
+}
+
+function somEttSteg(inp, bruk) {
+  let foer = null, steg = 0;
+  // Records the step if the project changed and no other step came in between
+  const avslutt = () => {
+    if (ventendeSteg === avslutt) ventendeSteg = null;
+    if (foer !== null && steg === state.angreSteg && foer !== JSON.stringify(state.prosjekt)) merk(true, foer);
+    foer = null;
+  };
+  // A drag that ended where it began sends no change, so the next interaction closes it
+  inp.addEventListener('pointerdown', avslutt);
+  inp.addEventListener('keydown', avslutt);
+  inp.addEventListener('input', () => {
+    if (foer === null) { lukkVentendeSteg(); foer = JSON.stringify(state.prosjekt); steg = state.angreSteg; ventendeSteg = avslutt; }
+    bruk();
+    tegnSnart();
+    planleggLagring();
+  });
+  inp.addEventListener('change', avslutt);
+}
+
+function merk(tving, foer) {
+  lukkVentendeSteg();
   const na = Date.now();
   if (!tving && na - state.sisteMerke < 500) return;
   state.sisteMerke = na;
-  state.angre.push(JSON.stringify(state.prosjekt));
+  state.angre.push(foer || JSON.stringify(state.prosjekt));
+  state.angreSteg++;
   if (state.angre.length > 100) state.angre.shift();
   state.gjor.length = 0;
+  oppdaterAngreknapper();
   planleggLagring();
+}
+function oppdaterAngreknapper() {
+  document.getElementById('angreknapp').disabled = !state.angre.length;
+  document.getElementById('gjortknapp').disabled = !state.gjor.length;
 }
 
 function angre() {
+  lukkVentendeSteg();
   if (!state.angre.length) { setStatus('Ingenting å angre'); return; }
   state.gjor.push(JSON.stringify(state.prosjekt));
   state.prosjekt = JSON.parse(state.angre.pop());
+  state.angreSteg++;
   nullstillMerking();
   stoppRedigering();
   byggAlt(); tegnSnart(); planleggLagring();
 }
 
 function gjorOm() {
+  lukkVentendeSteg();
   if (!state.gjor.length) { setStatus('Ingenting å gjøre om'); return; }
   state.angre.push(JSON.stringify(state.prosjekt));
   state.prosjekt = JSON.parse(state.gjor.pop());
+  state.angreSteg++;
   nullstillMerking();
   stoppRedigering();
   byggAlt(); tegnSnart(); planleggLagring();
@@ -1394,16 +1459,28 @@ function brukteBildeIder() {
 }
 
 let lagreTimer = null;
+let lagringFeilet = false;
+async function lagreNaa() {
+  clearTimeout(lagreTimer);
+  lagreTimer = null;
+  const bildekart = {};
+  brukteBildeIder().forEach(id => { const b = bilder.get(id); if (b) bildekart[id] = b.url; });
+  try {
+    await idbSett('prosjekt', { prosjekt: state.prosjekt, bilder: bildekart });
+    lagringFeilet = false;
+  } catch (e) {
+    // Said once per failure streak, not after every change
+    if (!lagringFeilet) setStatus('Fasade fikk ikke lagret prosjektet i nettleseren. Lagre det som fil med «Lagre».', 8000);
+    lagringFeilet = true;
+  }
+}
 function planleggLagring() {
   clearTimeout(lagreTimer);
-  lagreTimer = setTimeout(async () => {
-    const bildekart = {};
-    brukteBildeIder().forEach(id => { const b = bilder.get(id); if (b) bildekart[id] = b.url; });
-    try {
-      await idbSett('prosjekt', { prosjekt: state.prosjekt, bilder: bildekart });
-    } catch (e) { /* automatic saving is a bonus, never an error the user should see */ }
-  }, 1200);
+  lagreTimer = setTimeout(lagreNaa, 1200);
 }
+// A change made just before the tab closes is saved at once
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && lagreTimer) lagreNaa(); });
+addEventListener('pagehide', () => { if (lagreTimer) lagreNaa(); });
 
 function lastBildeFraUrl(url) {
   return new Promise((res, rej) => {
@@ -1753,7 +1830,7 @@ function faktorTilVersjon4(l, F) { return fitFaktorVersjon3(l, F) / fitFaktor(l.
 // Rescales every phone in a project from version 3 or older: in the slides, the template
 // and the layouts kept for the other formats
 function tilVersjon4(p) {
-  const F0 = FORMATER[p.format] || FORMATER.iphone69;
+  const F0 = formatMaal(p.format) || FORMATER.iphone63;
   const lagene = new Map();
   (p.slides || []).forEach(s => (s.lag || []).forEach(l => {
     lagene.set(l.id, l);
@@ -1761,7 +1838,7 @@ function tilVersjon4(p) {
   }));
   if (p.mal) p.mal.roller.forEach(r => { if (r.type === 'telefon') r.felt.skala *= faktorTilVersjon4(r.felt, F0); });
   Object.keys(p.formatminne).forEach(fmt => {
-    const F = FORMATER[fmt], minne = p.formatminne[fmt];
+    const F = formatMaal(fmt), minne = p.formatminne[fmt];
     if (!F || !minne) return;
     Object.keys(minne.lag || {}).forEach(id => {
       const l = lagene.get(id), g = minne.lag[id];
@@ -2704,7 +2781,6 @@ function tekstOppsett(lag) {
       linje.til = ventendeRom.til;
     }
     linje.slutt = slutt;
-    if (ai === alle.length - 1) linje.slutt = slutt;
   });
 
   // Heights, baselines, and x-placement
@@ -2979,13 +3055,13 @@ function tegnTekst(ctx, lag) {
   const kant = !!lag.kantlinje;
   const harTekst = (lag.tekst || '').trim().length > 0;
   const grunnAlfa = lag.opasitet / 100;
+  // The plate's left edge, relative to x
+  const plateX0 = padX => lag.just === 'venstre' ? -lag.bredde / 2 - padX
+    : lag.just === 'hoyre' ? lag.bredde / 2 - O.maksB - padX : -O.maksB / 2 - padX;
   if ((plate === 'fylt' || kant) && harTekst) {
     const padX = lag.str * (lag.platePadX === undefined ? 55 : lag.platePadX) / 100;
     const padY = lag.str * (lag.platePadY === undefined ? 38 : lag.platePadY) / 100;
-    let x0;
-    if (lag.just === 'venstre') x0 = -lag.bredde / 2 - padX;
-    else if (lag.just === 'hoyre') x0 = lag.bredde / 2 - O.maksB - padX;
-    else x0 = -O.maksB / 2 - padX;
+    const x0 = plateX0(padX);
     const y0 = -blokkH / 2 - padY;
     const bW = O.maksB + padX * 2, bH = blokkH + padY * 2;
     const rad = Math.max(0, Math.min(lag.str * (lag.plateRadius === undefined ? 50 : lag.plateRadius) / 100, bH / 2, bW / 2));
@@ -3037,11 +3113,13 @@ function tegnTekst(ctx, lag) {
   // The box should encompass what's actually visible - the plate can extend well beyond the text
   const padX = (plate === 'fylt' || kant) ? lag.str * (lag.platePadX === undefined ? 55 : lag.platePadX) / 100 : 0;
   const padY = (plate === 'fylt' || kant) ? lag.str * (lag.platePadY === undefined ? 38 : lag.platePadY) / 100 : 0;
-  const bw = Math.max(lag.bredde, O.maksB + padX * 2);
+  const medPlate = (plate === 'fylt' || kant) && harTekst;
+  const bw = medPlate ? O.maksB + padX * 2 : Math.max(lag.bredde, O.maksB + padX * 2);
+  const bx = medPlate ? lag.x + plateX0(padX) : lag.x - bw / 2;
   // The box follows the text block exactly, so its top is Y and the distances you see are the real ones
   const bh = blokkH + padY * 2;
   settHitboks(lag.id, {
-    x: lag.x - bw / 2, y: midtY - bh / 2,
+    x: bx, y: midtY - bh / 2,
     w: bw, h: bh,
     cx: lag.x, cy: midtY, ay: lag.y, rot: (lag.rotasjon || 0) * Math.PI / 180
   });
@@ -3188,10 +3266,17 @@ function hjorner(h) {
   }));
 }
 
+// Canvas pixels per screen pixel
+function skjermPx() {
+  const r = lerret.getBoundingClientRect();
+  return r.width ? lerret.width / r.width : 1;
+}
+
 function tegnRamme(ctx, pts, sterk) {
+  const k = Math.max(1, skjermPx() / 4);     // never thinner on screen than in the single-slide view
   ctx.save();
-  ctx.lineWidth = sterk ? 4 : 3;
-  ctx.setLineDash(sterk ? [18, 13] : [10, 10]);
+  ctx.lineWidth = (sterk ? 4 : 3) * k;
+  ctx.setLineDash(sterk ? [18 * k, 13 * k] : [10 * k, 10 * k]);
   ctx.strokeStyle = sterk ? 'rgba(255,255,255,.9)' : 'rgba(255,255,255,.62)';
   ctx.beginPath();
   pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
@@ -3199,7 +3284,7 @@ function tegnRamme(ctx, pts, sterk) {
   ctx.stroke();
   ctx.setLineDash([]);
   ctx.strokeStyle = 'rgba(20,22,18,' + (sterk ? .45 : .3) + ')';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2 * k;
   ctx.stroke();
   ctx.restore();
 }
@@ -3236,16 +3321,17 @@ function tegnMarkering(ctx) {
   if (!h) return;
   const pts = hjorner({ x: h.x - 14, y: h.y - 14, w: h.w + 28, h: h.h + 28, cx: h.cx, cy: h.cy, rot: h.rot });
   const hj = pts[2];
+  const k = Math.max(1, skjermPx() / 4);
   ctx.save();
   ctx.beginPath();
-  ctx.arc(hj.x, hj.y, 27, 0, Math.PI * 2);
+  ctx.arc(hj.x, hj.y, 27 * k, 0, Math.PI * 2);
   ctx.fillStyle = '#ffffff';
   ctx.fill();
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 3 * k;
   ctx.strokeStyle = 'rgba(28,30,26,.5)';
   ctx.stroke();
   ctx.restore();
-  state._handtak = hj;
+  state._handtak = { x: hj.x, y: hj.y, r: 58 * k };
 }
 
 // The rectangle you drag out to select multiple layers
@@ -3304,6 +3390,15 @@ function xForIndeks(lag, L, i) {
   return s.x + s.w;
 }
 
+const tegndeler = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter() : null;
+function tegngrenser(t) {
+  const g = [];
+  if (tegndeler) for (const d of tegndeler.segment(t)) g.push(d.index);
+  else for (let j = 0; j < t.length; j++) { const c = t.charCodeAt(j - 1); if (!(c >= 0xd800 && c <= 0xdbff)) g.push(j); }
+  g.push(t.length);
+  return g;
+}
+
 function indeksPaaLinje(lag, L, x) {
   let best = L.fra, bestD = Infinity;
   const proev = i => {
@@ -3311,7 +3406,8 @@ function indeksPaaLinje(lag, L, x) {
     if (d < bestD) { bestD = d; best = i; }
   };
   if (!L.stykker.length) return L.fra;
-  L.stykker.forEach(p => { for (let j = 0; j <= p.t.length; j++) proev(p.fra + j); });
+  // Only between whole characters, so a flag or a joined emoji is never split
+  L.stykker.forEach(p => { tegngrenser(p.t).forEach(j => proev(p.fra + j)); });
   return best;
 }
 
@@ -3524,14 +3620,16 @@ tekstinn.addEventListener('keydown', e => {
   const l = redigertLag();
   if (!l) return;
   if (e.key === 'Escape') { e.preventDefault(); avsluttRedigering(); return; }
-  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+  const kmd = ER_MAC ? e.metaKey : e.ctrlKey;
+  const bokstav = e.key.toLowerCase();
+  if (kmd && (bokstav === 'z' || (!ER_MAC && bokstav === 'y'))) {
     e.preventDefault();
     avsluttRedigering();
-    if (e.shiftKey) gjorOm(); else angre();
+    if (e.shiftKey || bokstav === 'y') gjorOm(); else angre();
     return;
   }
-  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'd') { e.preventDefault(); return; }
-  if ((e.metaKey || e.ctrlKey) && ['b', 'i', 'u'].indexOf(e.key.toLowerCase()) >= 0) {
+  if (kmd && bokstav === 'd') { e.preventDefault(); return; }
+  if (kmd && ['b', 'i', 'u'].indexOf(bokstav) >= 0) {
     e.preventDefault();
     const k = e.key.toLowerCase();
     const r = state.rediger;
@@ -3543,17 +3641,22 @@ tekstinn.addEventListener('keydown', e => {
     else brukPaaMerket({ understrek: !(h && h.understrek) });
     return;
   }
-  if (['ArrowUp', 'ArrowDown', 'Home', 'End'].indexOf(e.key) >= 0) {
+  // Cmd+left/right is Home/End on a Mac; Cmd+up/down and Ctrl+Home/End go to the start or end of the text
+  let tast = e.key;
+  if (ER_MAC && e.metaKey && (tast === 'ArrowLeft' || tast === 'ArrowRight')) tast = tast === 'ArrowLeft' ? 'Home' : 'End';
+  const hele = ER_MAC ? e.metaKey && (tast === 'ArrowUp' || tast === 'ArrowDown') : e.ctrlKey && (tast === 'Home' || tast === 'End');
+  if (['ArrowUp', 'ArrowDown', 'Home', 'End'].indexOf(tast) >= 0 && !e.altKey) {
     // The field wraps lines differently than the canvas, so we compute these ourselves
     e.preventDefault();
     const O = oppsettFor(l);
     const i = state.rediger.til;
     const k = linjeFor(O, i);
     let ny;
-    if (e.key === 'Home') ny = O.linjer[k].fra;
-    else if (e.key === 'End') ny = Math.max(O.linjer[k].til, O.linjer[k].fra);
+    if (hele) ny = tast === 'ArrowUp' || tast === 'Home' ? 0 : (l.tekst || '').length;
+    else if (tast === 'Home') ny = O.linjer[k].fra;
+    else if (tast === 'End') ny = Math.max(O.linjer[k].til, O.linjer[k].fra);
     else {
-      const mk = k + (e.key === 'ArrowUp' ? -1 : 1);
+      const mk = k + (tast === 'ArrowUp' ? -1 : 1);
       if (mk < 0) ny = 0;
       else if (mk >= O.linjer.length) ny = (l.tekst || '').length;
       else ny = indeksPaaLinje(l, O.linjer[mk], xForIndeks(l, O.linjer[k], i));
@@ -3596,24 +3699,26 @@ tekstverktoy.innerHTML =
   '<button id="tv-strek" title="Understrek (' + KMD + 'U)" style="text-decoration:underline">U</button>' +
   '<span class="skille"></span>' +
   '<button id="tv-plate" title="Farget plate bak ordene, som en tusj">Tusj</button>' +
-  '<input type="color" id="tv-platefarge" title="Farge på markørplaten">' +
+  '<input type="color" id="tv-platefarge" title="Farge på tusjen">' +
   '<span class="skille"></span>' +
   '<button id="tv-fjern" class="fjernstil" title="Gjør de merkede ordene like resten av teksten">Som resten</button>';
 
-function brukPaaMerket(patch) {
+// `iDrag`: the caller records the undo step (see somEttSteg)
+function brukPaaMerket(patch, iDrag) {
   const l = redigertLag();
   if (!l || !state.rediger) return;
   const fra = Math.min(state.rediger.fra, state.rediger.til);
   const til = Math.max(state.rediger.fra, state.rediger.til);
   if (til <= fra) return;
-  endre(() => { endreUthev(l, fra, til, patch); }, { tving: true });
+  if (iDrag) endreUthev(l, fra, til, patch);
+  else endre(() => { endreUthev(l, fra, til, patch); }, { tving: true });
   byggUthevliste();
   oppdaterTekstverktoy();
   tekstinn.focus({ preventScroll: true });
   synkFelt();
 }
 
-document.getElementById('tv-farge').addEventListener('input', e => brukPaaMerket({ farge: e.target.value }));
+somEttSteg(document.getElementById('tv-farge'), () => brukPaaMerket({ farge: document.getElementById('tv-farge').value }, true));
 document.getElementById('tv-font').addEventListener('change', e => brukPaaMerket({ font: e.target.value }));
 const stegStr = retning => {
   const l = redigertLag();
@@ -3624,7 +3729,7 @@ const stegStr = retning => {
 };
 document.getElementById('tv-mindre').onclick = () => stegStr(-1);
 document.getElementById('tv-storre').onclick = () => stegStr(1);
-document.getElementById('tv-platefarge').addEventListener('input', e => brukPaaMerket({ plate: true, plateFarge: e.target.value }));
+somEttSteg(document.getElementById('tv-platefarge'), () => brukPaaMerket({ plate: true, plateFarge: document.getElementById('tv-platefarge').value }, true));
 document.getElementById('tv-vekt').addEventListener('change', e => brukPaaMerket({ vekt: parseInt(e.target.value, 10) }));
 document.getElementById('tv-str').addEventListener('change', e => brukPaaMerket({ strProsent: parseInt(e.target.value, 10) }));
 document.getElementById('tv-kursiv').addEventListener('click', () => {
@@ -4277,22 +4382,24 @@ function lesFilerTilBilder(filer) {
   }))).then(ider => ider.filter(Boolean));
 }
 
+// Copies layers with new ids. Groups and stacking belong to the copies, not to the originals.
+function kopierLag(liste) {
+  const gruppekart = {}, idkart = {};
+  const kopier = liste.map(l => {
+    const k = JSON.parse(JSON.stringify(l));
+    k.id = uid();
+    idkart[l.id] = k.id;
+    if (k.gruppe) k.gruppe = gruppekart[k.gruppe] || (gruppekart[k.gruppe] = uid());
+    return k;
+  });
+  kopier.forEach(k => { if (k.folgerId) { if (idkart[k.folgerId]) k.folgerId = idkart[k.folgerId]; else delete k.folgerId; } });
+  return kopier;
+}
+
 function dypKopiSlide(s) {
   const k = JSON.parse(JSON.stringify(s));
   k.id = uid();
-  const gruppekart = {};
-  const idkart = {};
-  k.lag.forEach(l => {
-    const gammel = l.id;
-    l.id = uid();
-    idkart[gammel] = l.id;
-    // Groups should belong to their own slide, not be shared with the original
-    if (l.gruppe) {
-      if (!gruppekart[l.gruppe]) gruppekart[l.gruppe] = uid();
-      l.gruppe = gruppekart[l.gruppe];
-    }
-  });
-  k.lag.forEach(l => { if (l.folgerId) { if (idkart[l.folgerId]) l.folgerId = idkart[l.folgerId]; else delete l.folgerId; } });
+  k.lag = kopierLag(s.lag);
   return k;
 }
 
@@ -4305,7 +4412,7 @@ async function leggTilSkjermbilder(filer) {
       const s = aktivSlide();
       const tomt = s && s.lag.find(l => erEnhet(l) && !l.skjermbildeId);
       if (k === 0 && tomt) { tomt.skjermbildeId = id; return; }
-      const mal = aktivSlide();
+      const mal = folgerMalen(aktivSlide()) ? aktivSlide() : null;
       const ny = mal ? dypKopiSlide(mal) : nySlide(state.prosjekt.format);
       const tel = ny.lag.find(erEnhet);
       if (tel) tel.skjermbildeId = id;
@@ -4330,6 +4437,7 @@ function el(html) {
 function skyv(label, hent, sett, min, max, step, fmt, norm, felter) {
   const rad = el('<div class="skyvrad"><div class="topplinje"><span>' + label + '</span><span style="display:flex;align-items:center;gap:5px"><span class="verdi"></span></span></div><input type="range"></div>');
   const inp = rad.querySelector('input');
+  inp.setAttribute('aria-label', label);
   const verdi = rad.querySelector('.verdi');
   const toppHoyre = rad.querySelector('.topplinje > span:last-child');
   inp.min = min; inp.max = max; inp.step = step;
@@ -4339,14 +4447,14 @@ function skyv(label, hent, sett, min, max, step, fmt, norm, felter) {
     const gammel = toppHoyre.querySelector('.tilbakestill');
     if (gammel) gammel.remove();
     if (norm !== undefined && hent() !== norm) {
-      const b = el('<button class="tilbakestill" title="Tilbakestill til normal">&#8634;</button>');
+      const b = el('<button class="tilbakestill" title="Tilbakestill til normal" aria-label="Tilbakestill til normal">&#8634;</button>');
       b.onclick = () => { endre(() => sett(norm)); speilHvisPaa(felter); oppdater(); };
       toppHoyre.appendChild(b);
     }
   };
-  inp.addEventListener('input', () => {
+  somEttSteg(inp, () => {
     dragKvalitet = true;
-    endre(() => sett(parseFloat(inp.value)));
+    sett(parseFloat(inp.value));
     speilHvisPaa(felter);
     verdi.textContent = fmt ? fmt(hent()) : hent();
   });
@@ -4356,7 +4464,7 @@ function skyv(label, hent, sett, min, max, step, fmt, norm, felter) {
     oppdater();
   });
   oppdater();
-  return medAlle(rad, felter);
+  return rad;
 }
 
 /* Which weights a font actually has, as { requested weight: weight you get }.
@@ -4432,7 +4540,7 @@ function vektrad(hentFont, hentVekt, settVekt, medArv, felter) {
     const aktiv = (hentVekt() || 0) === v[0];
     const finnes = !v[0] || kart[v[0]] === v[0];
     if (v[0] && !finnes) mangler++;
-    const b = el('<button class="vektknapp' + (aktiv ? ' aktiv' : '') + (finnes ? '' : ' mangler') + '" title="' +
+    const b = el('<button class="vektknapp' + (aktiv ? ' aktiv' : '') + (finnes ? '' : ' mangler') + '" aria-pressed="' + aktiv + '" title="' +
       (v[0] ? v[0] + ' ' + v[1] + (finnes ? '' : ' (denne fonten har den ikke, du får ' + kart[v[0]] + ')')
             : 'Samme vekt som resten av teksten') + '">' +
       (v[0] ? 'Aa' : '&#8212;') + '<span class="tall">' + (v[0] || 'arv') + '</span></button>');
@@ -4450,40 +4558,44 @@ function vektrad(hentFont, hentVekt, settVekt, medArv, felter) {
       ' har ikke alle vektene. De nedtonede gir samme resultat som vekten ved siden av. ' +
       'Vil du ha større forskjell, prøv en annen skrift.</div>'));
   }
-  return medAlle(ut, felter);
+  return ut;
 }
 
 function segrad(valg, felter) {
   const rad = el('<div class="segrad"></div>');
   valg.forEach(v => {
-    const b = el('<button>' + v.label + '</button>');
+    const b = el('<button aria-pressed="' + !!v.aktiv + '">' + v.label + '</button>');
     if (v.aktiv) b.classList.add('aktiv');
     b.onclick = () => { v.velg(); speilHvisPaa(felter); };
     rad.appendChild(b);
   });
-  return medAlle(rad, felter);
+  return rad;
 }
 
 function fargerad(navn, hent, sett, felter) {
   const rad = el('<div class="fargerad"><span class="navnelapp">' + navn + '</span><input type="color"><input type="text" spellcheck="false"></div>');
   const c = rad.querySelector('input[type=color]');
   const t = rad.querySelector('input[type=text]');
+  c.setAttribute('aria-label', navn);
+  t.setAttribute('aria-label', navn + ', fargekode');
   c.value = hent(); t.value = hent();
-  c.addEventListener('input', () => { endre(() => sett(c.value)); speilHvisPaa(felter); t.value = c.value; });
+  somEttSteg(c, () => { sett(c.value); speilHvisPaa(felter); t.value = c.value; });
   t.addEventListener('input', () => {
     const n = normHex(t.value);
     if (n) { endre(() => sett(n)); speilHvisPaa(felter); c.value = n; }
   });
   t.addEventListener('blur', () => { t.value = hent(); });
-  return medAlle(rad, felter);
+  return rad;
 }
 
-function feltrad(navn, hent, sett, felter, skjulBoks) {
+function feltrad(navn, hent, sett, felter) {
   const rad = el('<div class="feltrad"><span class="navnelapp">' + navn + '</span><input type="number" step="1"></div>');
   const inp = rad.querySelector('input');
+  inp.setAttribute('aria-label', navn);
   inp.value = Math.round(hent());
+  rad.oppdater = () => { inp.value = Math.round(hent()); };
   inp.addEventListener('change', () => { endre(() => sett(parseFloat(inp.value) || 0)); speilHvisPaa(felter); });
-  return skjulBoks ? rad : medAlle(rad, felter);
+  return rad;
 }
 
 function knapperad(knapper) {
@@ -4495,12 +4607,6 @@ function knapperad(knapper) {
   });
   return rad;
 }
-
-/* ------- «Endre på alle»: the same setting across every screenshot -------
-
-   Each setting can be checked so the change also hits the corresponding
-   layer in every slide. The checkbox applies for the session, and is off when the tool
-   opens. Content - the text, the screenshot, and the graphic file - is never mirrored. */
 
 const bildevalg = document.getElementById('bildevalg');
 
@@ -4623,7 +4729,6 @@ function speilHvisPaa(felter) {
   planleggLagring();
 }
 
-// Everything in a layer is restored from the template
 // Roles no layer uses anymore don't belong in the template
 function ryddRoller() {
   const m = state.prosjekt.mal;
@@ -4633,6 +4738,7 @@ function ryddRoller() {
   if (m.roller.some(r => !brukt.has(r.id))) m.roller = m.roller.filter(r => brukt.has(r.id));
 }
 
+// Everything in a layer is restored from the template
 function tilbakestillTilMal(lag) {
   const r = rollen(lag.rolleId);
   if (!r) return;
@@ -4641,10 +4747,6 @@ function tilbakestillTilMal(lag) {
 }
 
 function avviksliste(lag) { return lag && lag.avvik ? Object.keys(lag.avvik) : []; }
-
-
-
-
 
 // Choose which slides something should apply to. `bruk` receives the ids you checked.
 function visBildevelger(ved, valgteIder, tittel, bruk) {
@@ -4664,7 +4766,7 @@ function visBildevelger(ved, valgteIder, tittel, bruk) {
   state.prosjekt.slides.forEach((s, i) => {
     const detteBildet = s === s0;
     const rad = el('<div class="bilderad' + (detteBildet ? ' dette' : '') + '">' +
-      '<input type="checkbox"' + (valgte.has(s.id) || detteBildet ? ' checked' : '') + (detteBildet ? ' disabled' : '') + '>' +
+      '<input type="checkbox" aria-label="Bilde ' + (i + 1) + '"' + (valgte.has(s.id) || detteBildet ? ' checked' : '') + (detteBildet ? ' disabled' : '') + '>' +
       '<canvas width="30" height="' + Math.round(30 * F.h / F.w) + '" data-i="' + i + '"></canvas>' +
       '<span class="merkelapp">Bilde ' + (i + 1) + (detteBildet ? ' (dette)' : '') +
       '<span class="liten">' + esc(bildetekst(s) || 'Uten overskrift') + '</span></span></div>');
@@ -4684,6 +4786,7 @@ function visBildevelger(ved, valgteIder, tittel, bruk) {
     altboks.checked = paa === andre.length;
     altboks.indeterminate = paa > 0 && paa < andre.length;
     altrad.querySelector('.merkelapp').textContent = altboks.checked ? 'Ta bort alle' : 'Velg alle';
+    altboks.setAttribute('aria-label', altboks.checked ? 'Ta bort alle' : 'Velg alle');
   }
   altrad.onclick = ev => {
     const paa = ev.target === altboks ? altboks.checked : !altboks.checked;
@@ -4706,9 +4809,17 @@ function visBildevelger(ved, valgteIder, tittel, bruk) {
   const b = bildevalg.getBoundingClientRect();
   bildevalg.style.left = Math.max(8, Math.min(r.left - b.width + r.width, window.innerWidth - b.width - 8)) + 'px';
   bildevalg.style.top = Math.min(r.bottom + 6, window.innerHeight - b.height - 8) + 'px';
+  bildevalg.setAttribute('aria-label', tittel);
+  bildevalgFra = ved;
+  altboks.focus();
 }
 
-function lukkBildevalg() { bildevalg.classList.remove('vis'); }
+let bildevalgFra = null;
+function lukkBildevalg() {
+  bildevalg.classList.remove('vis');
+  if (bildevalgFra && bildevalgFra.isConnected) bildevalgFra.focus();
+  bildevalgFra = null;
+}
 
 // The headline in the slide, so the row says what the slide is about
 function bildetekst(s) {
@@ -4739,7 +4850,7 @@ function visUtvalgsvelger(ved) {
   visBildevelger(ved, start, 'Endringer gjelder', ider => {
     state.malUtvalg = ider;
     state.malmodus = ider.length ? 'utvalg' : 'bilde';
-    byggEgenskaper();
+    byggEgenskaper(); tegnSnart();
     setStatus(ider.length ? 'Endringer gjelder dette bildet og ' + ider.length + ' til' : 'Endringer gjelder bare dette bildet');
   });
 }
@@ -4756,10 +4867,6 @@ function brukBakgrunn(ider) {
   setStatus(mal.length ? 'Bakgrunnen er brukt i ' + (mal.length + 1) + ' bilder' : 'Ingen andre bilder valgt');
   return mal.length;
 }
-
-// Settings don't need their own checkbox: the template controls where
-// the change lands. The function stays because every builder calls it.
-function medAlle(rad, felter) { return rad; }
 
 /* ------- Switching slides -------
 
@@ -4817,7 +4924,8 @@ function lagStripekort(i, h, medVerktoy) {
   const F = FMT();
   const w = Math.round(h * F.w / F.h);
   const kort = el('<div class="stripekort' + (i === state.prosjekt.aktiv ? ' aktiv' : '') + '">' +
-    '<canvas width="' + Math.round(w * 2) + '" height="' + Math.round(h * 2) + '" data-i="' + i + '"></canvas>' +
+    '<canvas width="' + Math.round(w * 2) + '" height="' + Math.round(h * 2) + '" data-i="' + i + '" role="button" tabindex="0" aria-label="Bilde ' + (i + 1) + '"' +
+      (i === state.prosjekt.aktiv ? ' aria-current="true"' : '') + '></canvas>' +
     '<span class="nr">' + (i + 1) + (folgerMalen(state.prosjekt.slides[i]) ? '' : ' · egen') + '</span></div>');
   const cv = kort.querySelector('canvas');
   cv.style.width = w + 'px';
@@ -4829,10 +4937,10 @@ function lagStripekort(i, h, medVerktoy) {
   });
   if (medVerktoy) {
     const v = el('<div class="verktoy">' +
-      '<button class="miniknapp" data-g="opp" title="Flytt frem">&#8592;</button>' +
-      '<button class="miniknapp" data-g="ned" title="Flytt bak">&#8594;</button>' +
-      '<button class="miniknapp" data-g="dup" title="Dupliser bildet">&#10697;</button>' +
-      '<button class="miniknapp slett" data-g="slett" title="Slett bildet">&#10005;</button></div>');
+      '<button class="miniknapp" data-g="opp" title="Flytt frem" aria-label="Flytt frem">&#8592;</button>' +
+      '<button class="miniknapp" data-g="ned" title="Flytt bak" aria-label="Flytt bak">&#8594;</button>' +
+      '<button class="miniknapp" data-g="dup" title="Dupliser bildet" aria-label="Dupliser bildet">&#10697;</button>' +
+      '<button class="miniknapp slett" data-g="slett" title="Slett bildet" aria-label="Slett bildet">&#10005;</button></div>');
     v.addEventListener('click', e => {
       const g = e.target.dataset && e.target.dataset.g;
       if (!g) return;
@@ -4841,6 +4949,8 @@ function lagStripekort(i, h, medVerktoy) {
     });
     kort.appendChild(v);
   }
+  const id = state.prosjekt.slides[i].id;
+  kort.querySelectorAll('button, [role=button]').forEach(b => { b.dataset.fokus = id + '-' + (b.dataset.g || 'kort'); });
   return kort;
 }
 
@@ -4864,14 +4974,16 @@ function byggSomvarsel(boks) {
     'uten å være gjennomgående. I App Store blir det klippet, og fortsettelsen treffer ikke.</span></div>');
   const knapp = el('<button class="minknapp">Vis meg</button>');
   knapp.onclick = () => {
-    byttSlide(brudd[0]);
-    const s = aktivSlide();
-    const F = FMT();
-    const synder = s.lag.find(l => {
+    // The layer crosses the right edge of the slide before the gap, or the left edge of the one after
+    const i = brudd[0], F = FMT();
+    const krysser = (s, kant) => s.lag.find(l => {
       if (!l.synlig || l.spenn) return false;
       const b = boksFor(l);
-      return !!b && (b.h > F.w + 2 || b.v < -2);
+      return !!b && (kant === 'h' ? b.h > F.w + 2 : b.v < -2);
     });
+    let synder = krysser(state.prosjekt.slides[i], 'h');
+    if (synder) byttSlide(i);
+    else { byttSlide(i + 1); synder = krysser(aktivSlide(), 'v'); }
     if (synder) { merkLag(synder.id); byggAlt(); tegnSnart(); }
     setStatus('Sett laget gjennomgående, så treffer overgangen av seg selv');
   };
@@ -4880,6 +4992,7 @@ function byggSomvarsel(boks) {
 }
 
 function byggRad(boks, h, medVerktoy, maks) {
+  const fokus = fokusNokkel(boks);
   boks.innerHTML = '';
   const F = FMT();
   const w = h * F.w / F.h;
@@ -4890,6 +5003,7 @@ function byggRad(boks, h, medVerktoy, maks) {
     boks.appendChild(lagStripekort(i, h, medVerktoy));
   });
   if (!state.prosjekt.slides.length) boks.appendChild(el('<div class="stripetom">Ingen skjermbilder ennå.</div>'));
+  gjenopprettFokus(boks, fokus);
 }
 
 function byggStripe() {
@@ -4912,7 +5026,8 @@ function byggGapvalg(boks) {
   if (!boks) return;
   boks.innerHTML = '';
   BUTIKKMAAL[FMT().serie].forEach(m => {
-    const b = el('<button class="minknapp' + (Math.abs((state.prosjekt.mellomrom || 0) - m.mellomrom) < 0.05 ? ' aktiv' : '') + '" title="' + m.hjelp + '">' + m.navn + '</button>');
+    const paa = Math.abs((state.prosjekt.mellomrom || 0) - m.mellomrom) < 0.05;
+    const b = el('<button class="minknapp' + (paa ? ' aktiv' : '') + '" aria-pressed="' + paa + '" title="' + m.hjelp + '">' + m.navn + '</button>');
     b.onclick = () => {
       endre(() => { state.prosjekt.mellomrom = m.mellomrom; }, { tving: true });
       byggStripe(); byggStorvisning(); tegnSnart();
@@ -5020,7 +5135,7 @@ function publiseringssjekk() {
   const funn = [];
   const margProsent = state.rutenett.tryggMarg;
   const marg = Math.round(F.w * margProsent / 100);
-  // The search result is measured for iPhone only
+  // The search result is measured on iPhone and applied to iPad; a Mac series has none
   const sokFaktor = F.serie === 'mac' ? 0 : SOKBREDDE_PT / F.w;
   const gjennomsiktige = [];
   const overskrifter = new Map();      // normalised headline -> { tekst, ider, lag }
@@ -5066,6 +5181,10 @@ function publiseringssjekk() {
           const st = statuslinjeStatus(l);
           if (st.feil) funn.push({ alvor: 'advarsel', hvor: hvor, i: i, lag: l.id, tekst: navn + ': ' + st.feil });
         }
+      }
+
+      if (l.type === 'grafikk' && !l.bildeId) {
+        funn.push({ alvor: 'feil', hvor: hvor, i: i, lag: l.id, tekst: navn + ' mangler bilde.' });
       }
 
       if (l.type === 'mac') {
@@ -5141,6 +5260,11 @@ function publiseringssjekk() {
       tekst: 'Bakgrunnen er gjennomsiktig. App Store godtar ikke gjennomsiktighet, så Fasade gjør den hvit når du laster ned.' });
   }
 
+  if (state.prosjekt.slides.length > 10) {
+    funn.push({ alvor: 'feil', hvor: 'Serien', i: 10, lag: null,
+      tekst: 'Serien har ' + state.prosjekt.slides.length + ' bilder. App Store Connect tar imot høyst 10 bilder per størrelse.' });
+  }
+
   if (state.prosjekt.slides.length < 3 && sokFaktor) {
     funn.push({ alvor: 'info', hvor: 'Serien', i: 0, lag: null,
       tekst: 'Serien har ' + state.prosjekt.slides.length + ' bilde' + (state.prosjekt.slides.length === 1 ? '' : 'r') +
@@ -5159,11 +5283,11 @@ function byggSjekk() {
     return;
   }
   const rang = { feil: 0, advarsel: 1, info: 2 };
+  const alvorsnavn = { feil: 'Feil', advarsel: 'Advarsel', info: 'Tips' };
   funn.sort((a, b) => rang[a.alvor] - rang[b.alvor]);
   funn.forEach(f => {
-    const merke = f.alvor === 'feil' ? '!' : (f.alvor === 'advarsel' ? '!' : 'i');
-    const rad = el('<div class="funn ' + f.alvor + '"><span class="merke">' + merke + '</span>' +
-      '<span class="tekst"><span class="hvor">' + f.hvor + '</span><br>' + f.tekst.replace(/</g, '&lt;') + '</span></div>');
+    const rad = el('<div class="funn ' + f.alvor + '" role="button" tabindex="0"><span class="merke" aria-hidden="true">' + (f.alvor === 'info' ? 'i' : '!') + '</span>' +
+      '<span class="tekst"><span class="hvor">' + alvorsnavn[f.alvor] + ' · ' + f.hvor + '</span><br>' + f.tekst.replace(/</g, '&lt;') + '</span></div>');
     rad.onclick = () => {
       visSjekk(false);
       byttSlide(f.i);
@@ -5173,9 +5297,24 @@ function byggSjekk() {
   });
 }
 
+const OVERLEGG = ['sjekkvisning', 'innholdsvisning', 'storvisning'];
+let overleggFra = null;
+function aapentOverlegg() {
+  return OVERLEGG.map(id => document.getElementById(id)).find(v => v.classList.contains('vis')) || null;
+}
+// A full-screen view holds the focus while it is open and gives it back when it closes
+function settOverlegg(v, paa) {
+  if (paa === v.classList.contains('vis')) return;
+  v.classList.toggle('vis', paa);
+  document.getElementById('app').inert = paa;
+  if (paa) { overleggFra = document.activeElement; v.querySelector('.lukk').focus(); }
+  else if (overleggFra && overleggFra.isConnected && overleggFra !== document.body) overleggFra.focus();
+  else document.activeElement.blur();
+}
+
 function visSjekk(paa) {
   const v = document.getElementById('sjekkvisning');
-  v.classList.toggle('vis', paa);
+  settOverlegg(v, paa);
   if (paa) byggSjekk();
   else document.getElementById('sjekkliste').innerHTML = '';
 }
@@ -5203,8 +5342,8 @@ function byggInnhold() {
     const felter = kort.querySelector('.felter');
 
     s.lag.filter(l => l.type === 'tekst').forEach(l => {
-      const rad = el('<div class="felt"><label>' + (l.navn || 'Tekst').replace(/</g, '&lt;') + '</label>' +
-        '<textarea rows="2" spellcheck="true"></textarea></div>');
+      const rad = el('<div class="felt"><label for="innhold-' + l.id + '">' + (l.navn || 'Tekst').replace(/</g, '&lt;') + '</label>' +
+        '<textarea id="innhold-' + l.id + '" rows="2" spellcheck="true"></textarea></div>');
       const ta = rad.querySelector('textarea');
       ta.value = l.tekst;
       ta.addEventListener('input', () => {
@@ -5250,9 +5389,9 @@ function byggInnhold() {
 
 function visInnhold(paa) {
   const v = document.getElementById('innholdsvisning');
-  v.classList.toggle('vis', paa);
+  settOverlegg(v, paa);
   if (paa) byggInnhold();
-  else document.getElementById('innholdsrad').innerHTML = '';
+  else { document.getElementById('innholdsrad').innerHTML = ''; byggAlt(); }
 }
 
 /* ------- Large view: the whole series as it appears in the store ------- */
@@ -5272,7 +5411,8 @@ function byggStorvisning() {
   hvor.innerHTML = '';
   // Only measured for iPhone; a Mac series shows the product page alone
   (mac ? [] : [['produkt', 'Produktside'], ['sok', 'Søkeresultat']]).forEach(v => {
-    const b = el('<button class="minknapp' + ((state.storHvor || 'produkt') === v[0] ? ' aktiv' : '') + '">' + v[1] + '</button>');
+    const paa = (state.storHvor || 'produkt') === v[0];
+    const b = el('<button class="minknapp' + (paa ? ' aktiv' : '') + '" aria-pressed="' + paa + '">' + v[1] + '</button>');
     b.onclick = () => { state.storHvor = v[0]; byggStorvisning(); };
     hvor.appendChild(b);
   });
@@ -5298,7 +5438,7 @@ function byggStorvisning() {
 
 function visStort(paa) {
   const v = document.getElementById('storvisning');
-  v.classList.toggle('vis', paa);
+  settOverlegg(v, paa);
   if (paa) byggStorvisning();
   else document.getElementById('storrad').innerHTML = '';   // release the canvases when it closes
 }
@@ -5309,6 +5449,7 @@ function slidehandling(g, i) {
   if (g === 'slett') {
     endre(() => {
       state.prosjekt.slides.splice(i, 1);
+      if (i < state.prosjekt.aktiv) state.prosjekt.aktiv--;
       if (!state.prosjekt.slides.length) state.prosjekt.slides.push(nySlide(state.prosjekt.format));
       state.prosjekt.aktiv = klem(state.prosjekt.aktiv, 0, state.prosjekt.slides.length - 1);
       nullstillMerking();
@@ -5322,7 +5463,7 @@ function slidehandling(g, i) {
       const m = kilde ? finnTilsvarende(state.prosjekt.slides[i + 1], kilde, nr) : null;
       merkLag(m ? m.id : (state.valgtLag === 'bakgrunn' ? 'bakgrunn' : null));
     }, { struktur: true, tving: true });
-    setStatus('Bildet er duplisert - bytt skjermbilde og juster teksten');
+    setStatus('Bildet er duplisert. Bytt skjermbilde og juster teksten.');
   } else if (g === 'opp' || g === 'ned') {
     const j = g === 'opp' ? i - 1 : i + 1;
     if (j < 0 || j >= state.prosjekt.slides.length) return;
@@ -5401,7 +5542,7 @@ function brukSomMal(s0) {
         r = nyRolle(l);
         mal.roller.push(r);
         l.rolleId = r.id;
-        andre.forEach(s => { if (!s.lag.some(x => x.rolleId === r.id)) s.lag.push(lagFraRolle(r)); });
+        andre.forEach(s => { if (!s.lag.some(x => x.rolleId === r.id)) s.lag.push(lagFraRolleMedBilde(r)); });
       } else {
         r.felt = malFelt(l);
         r.navn = l.navn;
@@ -5423,25 +5564,29 @@ function brukSomMal(s0) {
 
 function byggSlideliste() {
   const boks = document.getElementById('slideliste');
+  const fokus = fokusNokkel(boks);
   boks.innerHTML = '';
   if (state.oversikt === 'vannrett') return;    // the strip under the canvas shows the series instead
   const F = FMT();
   state.prosjekt.slides.forEach((s, i) => {
     const kort = el('<div class="slidekort' + (i === state.prosjekt.aktiv ? ' aktiv' : '') + '">' +
-      '<canvas width="132" height="' + Math.round(132 * F.h / F.w) + '" data-i="' + i + '"></canvas>' +
+      '<canvas width="132" height="' + Math.round(132 * F.h / F.w) + '" data-i="' + i + '" role="button" tabindex="0" aria-label="Bilde ' + (i + 1) + '"' +
+        (i === state.prosjekt.aktiv ? ' aria-current="true"' : '') + '></canvas>' +
       '<div class="navn">Bilde ' + (i + 1) + (folgerMalen(s) ? '' : ' <span class="egenmerke" title="Følger ikke malen">Egen</span>') + '</div>' +
       '<div class="rad">' +
-      '<button class="miniknapp" data-g="opp" title="Flytt frem">&#8593;</button>' +
-      '<button class="miniknapp" data-g="ned" title="Flytt bak">&#8595;</button>' +
-      '<button class="miniknapp" data-g="dup" title="Dupliser bildet med alt innhold">&#10697;</button>' +
-      '<button class="miniknapp slett" data-g="slett" title="Slett bildet">&#10005;</button>' +
+      '<button class="miniknapp" data-g="opp" title="Flytt frem" aria-label="Flytt frem">&#8593;</button>' +
+      '<button class="miniknapp" data-g="ned" title="Flytt bak" aria-label="Flytt bak">&#8595;</button>' +
+      '<button class="miniknapp" data-g="dup" title="Dupliser bildet med alt innhold" aria-label="Dupliser bildet med alt innhold">&#10697;</button>' +
+      '<button class="miniknapp slett" data-g="slett" title="Slett bildet" aria-label="Slett bildet">&#10005;</button>' +
       '</div></div>');
+    kort.querySelectorAll('button, [role=button]').forEach(b => { b.dataset.fokus = s.id + '-' + (b.dataset.g || 'kort'); });
     kort.addEventListener('click', e => {
       const g = e.target.dataset && e.target.dataset.g;
       if (g) slidehandling(g, i); else byttSlide(i);
     });
     boks.appendChild(kort);
   });
+  gjenopprettFokus(boks, fokus);
   planleggThumbs();
 }
 
@@ -5449,8 +5594,19 @@ function byggSlideliste() {
 
 const LAGTYPENAVN = { telefon: 'Telefon', mac: 'Mac', tekst: 'Tekst', grafikk: 'Grafikk' };
 
+// Rebuilding a list keeps the keyboard focus on the same control
+function fokusNokkel(boks) {
+  const a = document.activeElement;
+  return a && boks.contains(a) && a.dataset ? a.dataset.fokus : null;
+}
+function gjenopprettFokus(boks, nokkel) {
+  const m = nokkel && boks.querySelector('[data-fokus="' + nokkel + '"]');
+  if (m) m.focus();
+}
+
 function byggLagliste() {
   const boks = document.getElementById('lagliste');
+  const fokus = fokusNokkel(boks);
   boks.innerHTML = '';
   const s = aktivSlide();
   if (!s) return;
@@ -5460,34 +5616,25 @@ function byggLagliste() {
     const i = s.lag.indexOf(l);
     const navn = l.navn || LAGTYPENAVN[l.type];
     const rad = el('<div class="lagrad' + (erMerket(l.id) ? ' aktiv' : '') + (state.valgtLag === l.id ? ' fokus' : '') + '">' +
-      '<button class="oye' + (l.synlig ? '' : ' av') + '" title="Vis eller skjul laget">' + (l.synlig ? '&#9679;' : '&#9675;') + '</button>' +
-      '<span class="lagnavn">' + navn.replace(/</g, '&lt;') + '</span>' +
+      '<button class="oye' + (l.synlig ? '' : ' av') + '" title="Vis eller skjul laget" aria-label="Synlig" aria-pressed="' + !!l.synlig + '">' + (l.synlig ? '&#9679;' : '&#9675;') + '</button>' +
+      '<span class="lagnavn" role="button" tabindex="0" aria-pressed="' + erMerket(l.id) + '">' + navn.replace(/</g, '&lt;') + '</span>' +
       '<span class="lagtype">' + (l.gruppe ? '&#9678; ' : '') +
         (!l.rolleId && state.prosjekt.slides.length > 1 ? 'Bare her' : LAGTYPENAVN[l.type]) + '</span>' +
-      '<button class="miniknapp" data-g="opp" title="Flytt laget lenger frem">&#8593;</button>' +
-      '<button class="miniknapp" data-g="ned" title="Flytt laget lenger bak">&#8595;</button>' +
-      '<button class="miniknapp" data-g="dup" title="Dupliser laget">&#10697;</button>' +
-      '<button class="miniknapp slett" data-g="slett" title="Slett laget">&#10005;</button>' +
+      '<button class="miniknapp" data-g="opp" title="Flytt laget lenger frem" aria-label="Flytt laget lenger frem">&#8593;</button>' +
+      '<button class="miniknapp" data-g="ned" title="Flytt laget lenger bak" aria-label="Flytt laget lenger bak">&#8595;</button>' +
+      '<button class="miniknapp" data-g="dup" title="Dupliser laget" aria-label="Dupliser laget">&#10697;</button>' +
+      '<button class="miniknapp slett" data-g="slett" title="Slett laget" aria-label="Slett laget">&#10005;</button>' +
       '</div>');
+    rad.querySelectorAll('button, [role=button]').forEach(b => { b.dataset.fokus = l.id + '-' + (b.dataset.g || b.classList[0]); });
     rad.querySelector('.oye').onclick = e => {
       e.stopPropagation();
       endre(() => { l.synlig = !l.synlig; }, { struktur: true });
     };
     rad.addEventListener('click', e => {
       const g = e.target.dataset && e.target.dataset.g;
-      if (g === 'slett') {
-        endre(() => {
-          s.lag.splice(i, 1);
-          if (erMerket(l.id)) merkLag(null);
-        }, { struktur: true, tving: true });
-      } else if (g === 'dup') {
-        endre(() => {
-          const k = JSON.parse(JSON.stringify(l));
-          k.id = uid(); k.x += 40; k.y += 40;
-          delete k.folgerId;
-          s.lag.splice(i + 1, 0, k);
-          merkLag(k.id);
-        }, { struktur: true, tving: true });
+      if (g === 'slett' || g === 'dup') {
+        merkLag(l.id, false, true);
+        if (g === 'slett') slettMerkede(); else dupliserMerkede();
       } else if (g === 'opp' || g === 'ned') {
         // Up in the list = further forward = later in the layer order
         const j = g === 'opp' ? i + 1 : i - 1;
@@ -5496,7 +5643,7 @@ function byggLagliste() {
           const t = s.lag[i]; s.lag[i] = s.lag[j]; s.lag[j] = t;
         }, { struktur: true, tving: true });
       } else {
-        merkLag(l.id, e.shiftKey || e.metaKey || e.ctrlKey);
+        merkLag(l.id, e.shiftKey || (ER_MAC ? e.metaKey : e.ctrlKey));
         byggAlt(); tegnSnart();
       }
     });
@@ -5505,9 +5652,10 @@ function byggLagliste() {
   // The background stays fixed at the bottom
   const bgRad = el('<div class="lagrad' + (state.valgtLag === 'bakgrunn' ? ' aktiv' : '') + '">' +
     '<span style="flex:none;width:26px"></span>' +
-    '<span class="lagnavn">Bakgrunn</span><span class="lagtype">Fast</span></div>');
+    '<span class="lagnavn" role="button" tabindex="0" data-fokus="bakgrunn" aria-pressed="' + (state.valgtLag === 'bakgrunn') + '">Bakgrunn</span><span class="lagtype">Fast</span></div>');
   bgRad.onclick = () => { merkLag('bakgrunn'); byggAlt(); tegnSnart(); };
   boks.appendChild(bgRad);
+  gjenopprettFokus(boks, fokus);
 }
 
 /* ------- The properties panel ------- */
@@ -5540,7 +5688,7 @@ function byggEgenskaperNaa() {
   byggMalstripe(boks, l);
 
   // Name field for all layers
-  const navnerad = el('<div class="feltrad"><span class="navnelapp">Navn</span><input type="text" spellcheck="false"></div>');
+  const navnerad = el('<div class="feltrad"><span class="navnelapp">Navn</span><input type="text" spellcheck="false" aria-label="Navn"></div>');
   const navninp = navnerad.querySelector('input');
   navninp.value = l.navn || LAGTYPENAVN[l.type];
   navninp.addEventListener('change', () => {
@@ -5564,9 +5712,9 @@ function byggEgenskaperNaa() {
   // Shared: visibility and position
   boks.appendChild(skyv('Synlighet', () => l.opasitet, v => { l.opasitet = v; }, 0, 100, 1, v => v + ' %', 100, ['opasitet']));
   const duo = el('<div class="duorad"></div>');
-  duo.appendChild(feltrad('X', () => l.x, v => { l.x = v; }, ['x', 'y'], true));
-  duo.appendChild(feltrad('Y', () => l.y, v => { l.y = v; oppdaterLuft([l]); }, ['x', 'y', 'luftOver'], true));
-  boks.appendChild(medAlle(duo, ['x', 'y']));
+  duo.appendChild(feltrad('X', () => l.x, v => { l.x = v; }, ['x', 'y']));
+  duo.appendChild(feltrad('Y', () => l.y, v => { l.y = v; oppdaterLuft([l]); }, ['x', 'y', 'luftOver']));
+  boks.appendChild(duo);
   boks.appendChild(knapperad([
     { label: 'Midtstill vannrett', klikk: () => midtstill(l, 'x') },
     { label: 'Midtstill loddrett', klikk: () => midtstill(l, 'y') }
@@ -5665,6 +5813,20 @@ function leggISom(l, retning) {
 }
 
 // Positions the layer so its box sits exactly in the middle of the slide
+// Several layers are centred as one block
+function midtstillMerkede(akse) {
+  const flokk = merkedeLag();
+  if (flokk.length === 1) { midtstill(flokk[0], akse); return; }
+  const F = FMT(), B = merketBoks();
+  if (!B) return;
+  const d = akse === 'x' ? F.w / 2 - B.cx : F.h / 2 - B.cy;
+  endre(() => {
+    flokk.forEach(l => { if (akse === 'x') l.x = Math.round(l.x + d); else l.y = Math.round(l.y + d); });
+    oppdaterLuft(flokk);
+  }, { struktur: true, tving: true });
+  speilHvisPaa(['x', 'y', 'luftOver']);
+}
+
 function midtstill(l, akse) {
   const F = FMT();
   const av = boksAvstand(l) || { cx: 0, cy: 0 };   // hidden layers have no box: use the anchor
@@ -5731,7 +5893,6 @@ function fordelJevnt(akse) {
 function byggFlerpanel(boks, tittel, flokk) {
   tittel.textContent = flokk.length + ' lag merket';
   byggMalstripe(boks, flokk[0]);
-  const B = merketBoks();
   boks.appendChild(el('<div class="varsel">Skift-klikk for å legge til eller fjerne. Alt du gjør her gjelder alle de merkede lagene.</div>'));
 
   boks.appendChild(el('<div class="seksjon" style="margin:4px 0 0">Still på linje</div>'));
@@ -5760,18 +5921,8 @@ function byggFlerpanel(boks, tittel, flokk) {
 
   boks.appendChild(el('<div class="seksjon" style="margin:6px 0 0">Flytt sammen</div>'));
   boks.appendChild(knapperad([
-    { label: 'Midtstill vannrett', klikk: () => {
-      const F = FMT();
-      if (!B) return;
-      const d = F.w / 2 - B.cx;
-      endre(() => { flokk.forEach(l => { l.x = Math.round(l.x + d); }); }, { struktur: true, tving: true });
-    } },
-    { label: 'Midtstill loddrett', klikk: () => {
-      const F = FMT();
-      if (!B) return;
-      const d = F.h / 2 - B.cy;
-      endre(() => { flokk.forEach(l => { l.y = Math.round(l.y + d); }); oppdaterLuft(flokk); }, { struktur: true, tving: true });
-    } }
+    { label: 'Midtstill vannrett', klikk: () => midtstillMerkede('x') },
+    { label: 'Midtstill loddrett', klikk: () => midtstillMerkede('y') }
   ]));
 
   boks.appendChild(el('<div class="seksjon" style="margin:6px 0 0">Gruppe</div>'));
@@ -5817,9 +5968,9 @@ function byggMalstripe(boks, lag) {
   }
   if (state.prosjekt.slides.length > 1) {
     const rad = segrad([
-      { label: 'Hele serien', aktiv: state.malmodus === 'serie', velg: () => { state.malmodus = 'serie'; byggEgenskaper(); } },
+      { label: 'Hele serien', aktiv: state.malmodus === 'serie', velg: () => { state.malmodus = 'serie'; byggEgenskaper(); tegnSnart(); } },
       { label: 'Valgte bilder', aktiv: state.malmodus === 'utvalg', velg: () => {} },
-      { label: 'Bare dette', aktiv: state.malmodus === 'bilde', velg: () => { state.malmodus = 'bilde'; byggEgenskaper(); } }
+      { label: 'Bare dette', aktiv: state.malmodus === 'bilde', velg: () => { state.malmodus = 'bilde'; byggEgenskaper(); tegnSnart(); } }
     ]);
     rad.children[1].onclick = ev => visUtvalgsvelger(ev.currentTarget);
     boks.appendChild(el('<div class="seksjon" style="margin:0 0 2px">Endringer gjelder</div>'));
@@ -5852,7 +6003,7 @@ function byggMalstripe(boks, lag) {
           if (m && s1) s1.bakgrunn = Object.assign(kopiVerdi(m.bakgrunn), { avvik: {} });
         }
       }, { struktur: true, tving: true });
-      setStatus('Laget følger malen igjen');
+      setStatus(lag ? 'Laget følger malen igjen' : 'Bakgrunnen følger malen igjen');
     };
     kort.appendChild(knapp);
     boks.appendChild(kort);
@@ -5895,24 +6046,39 @@ function leggIMalen(lag) {
     state.prosjekt.slides.forEach(s => {
       if (s === aktivSlide() || !folgerMalen(s)) return;
       if (s.lag.some(x => x.rolleId === r.id)) return;
-      s.lag.push(lagFraRolle(r));
+      s.lag.push(lagFraRolleMedBilde(r));
     });
   }, { struktur: true, tving: true });
-  setStatus('Laget er lagt i malen og finnes nå i alle bildene');
+  setStatus('Laget er lagt i malen og finnes nå i alle bildene som følger malen');
+}
+
+function skjermbilderad(l) {
+  return knapperad([
+    { label: l.skjermbildeId ? 'Bytt skjermbilde' : 'Velg skjermbilde', klikk: () => {
+      pickFile('image/png,image/jpeg,image/webp', false, filer => {
+        lesFilerTilBilder(filer).then(ider => {
+          if (ider[0]) endre(() => { l.skjermbildeId = ider[0]; }, { struktur: true, tving: true });
+        });
+      });
+    } },
+    { label: 'Fjern', svak: true, klikk: () => endre(() => { l.skjermbildeId = null; }, { struktur: true }) }
+  ]);
+}
+
+function fargegrid(farger, l) {
+  const grid = el('<div class="fargegrid"></div>');
+  farger.forEach(v => {
+    const b = el('<button title="' + v.hex + '" aria-pressed="' + (l.variant === v.id) + '"' + (l.variant === v.id ? ' class="aktiv"' : '') +
+      '><span class="prikk" style="background:' + v.hex + '"></span>' + v.navn + '</button>');
+    b.onclick = () => { endre(() => { l.variant = v.id; }, { struktur: true }); speilHvisPaa(['variant']); };
+    grid.appendChild(b);
+  });
+  return grid;
 }
 
 function byggTelefonPanel(boks, l) {
   const norm = nyttTelefonlag();
-  boks.appendChild(knapperad([
-    { label: l.skjermbildeId ? 'Bytt skjermbilde' : 'Velg skjermbilde', klikk: () => {
-      pickFile('image/png,image/jpeg,image/webp', false, filer => {
-        lesFilerTilBilder(filer).then(ider => {
-          if (ider[0]) endre(() => { l.skjermbildeId = ider[0]; }, { tving: true });
-        });
-      });
-    } },
-    { label: 'Fjern', svak: true, klikk: () => endre(() => { l.skjermbildeId = null; }) }
-  ]));
+  boks.appendChild(skjermbilderad(l));
 
   const modell = l.modell || '17pro';
   boks.appendChild(el('<div style="font-size:12px;color:var(--gra);margin-top:2px">Modell</div>'));
@@ -5921,13 +6087,7 @@ function byggTelefonPanel(boks, l) {
     velg: () => endre(() => { l.modell = id; }, { struktur: true })
   })), ['modell']));
 
-  const grid = el('<div class="fargegrid"></div>');
-  VARIANTER.forEach(v => {
-    const b = el('<button title="' + v.hex + '"' + (l.variant === v.id ? ' class="aktiv"' : '') + '><span class="prikk" style="background:' + v.hex + '"></span>' + v.navn + '</button>');
-    b.onclick = () => { endre(() => { l.variant = v.id; }, { struktur: true }); speilHvisPaa(['variant']); };
-    grid.appendChild(b);
-  });
-  boks.appendChild(medAlle(grid, ['variant']));
+  boks.appendChild(fargegrid(VARIANTER, l));
 
   // The depth shows the distance in use: close to a large, strongly tilted phone the camera
   // stops at its limit. Size and tilt move that limit, so their sliders refresh it too.
@@ -5977,24 +6137,9 @@ function byggTelefonPanel(boks, l) {
 
 function byggMacPanel(boks, l) {
   const norm = nyttMaclag();
-  boks.appendChild(knapperad([
-    { label: l.skjermbildeId ? 'Bytt skjermbilde' : 'Velg skjermbilde', klikk: () => {
-      pickFile('image/png,image/jpeg,image/webp', false, filer => {
-        lesFilerTilBilder(filer).then(ider => {
-          if (ider[0]) endre(() => { l.skjermbildeId = ider[0]; }, { tving: true });
-        });
-      });
-    } },
-    { label: 'Fjern', svak: true, klikk: () => endre(() => { l.skjermbildeId = null; }) }
-  ]));
+  boks.appendChild(skjermbilderad(l));
   boks.appendChild(el('<div style="font-size:12px;color:var(--gra);margin-top:2px">MacBook Air 13 tommer</div>'));
-  const grid = el('<div class="fargegrid"></div>');
-  MACFARGER.forEach(v => {
-    const b = el('<button title="' + v.hex + '"' + (l.variant === v.id ? ' class="aktiv"' : '') + '><span class="prikk" style="background:' + v.hex + '"></span>' + v.navn + '</button>');
-    b.onclick = () => { endre(() => { l.variant = v.id; }, { struktur: true }); speilHvisPaa(['variant']); };
-    grid.appendChild(b);
-  });
-  boks.appendChild(medAlle(grid, ['variant']));
+  boks.appendChild(fargegrid(MACFARGER, l));
   boks.appendChild(skyv('Størrelse', () => l.skala, v => { l.skala = v; }, 0.1, 1.2, 0.01, v => Math.round(v * 100) + ' %', norm.skala, ['skala']));
   boks.appendChild(skyv('Skygge', () => l.skygge, v => { l.skygge = v; }, 0, 100, 1, v => v + ' %', norm.skygge, ['skygge']));
   boks.appendChild(el('<div style="font-size:12px;color:var(--gra);margin-top:2px">Utsnitt av skjermbildet</div>'));
@@ -6011,11 +6156,11 @@ function byggTekstPanel(boks, l) {
       else startRedigering(l, 0, (l.tekst || '').length);
     } }
   ]));
-  boks.appendChild(el('<div class="varsel">Dobbeltklikk på teksten i bildet for å skrive. Marker ord for å gi dem egen farge, vekt eller markørplate.</div>'));
+  boks.appendChild(el('<div class="varsel">Dobbeltklikk på teksten i bildet for å skrive. Marker ord for å gi dem egen farge, vekt eller tusj.</div>'));
   const uthevboks = el('<div class="egenskaper" id="uthevliste"></div>');
   boks.appendChild(uthevboks);
 
-  const fontSel = el('<select class="felt"></select>');
+  const fontSel = el('<select class="felt" aria-label="Skrift"></select>');
   FONTER.forEach(f => {
     const o = document.createElement('option');
     o.value = f; o.textContent = f === 'Systemfont' ? SYSTEMFONT_NAVN : f;
@@ -6023,13 +6168,13 @@ function byggTekstPanel(boks, l) {
     fontSel.appendChild(o);
   });
   fontSel.addEventListener('change', () => {
-    endre(() => { l.font = fontSel.value; });
+    endre(() => { l.font = fontSel.value; }, { struktur: true });
     speilHvisPaa(['font']);
     if (document.fonts && document.fonts.load) {
       document.fonts.load(l.vekt + ' 20px "' + fontSel.value + '"').then(fontErLastet);
     }
   });
-  boks.appendChild(medAlle(fontSel, ['font']));
+  boks.appendChild(fontSel);
 
   boks.appendChild(vektrad(() => l.font, () => l.vekt, v => { l.vekt = v || 400; }, false, ['vekt']));
   boks.appendChild(fargerad('Farge', () => l.farge, v => { l.farge = v; }, ['farge']));
@@ -6085,7 +6230,7 @@ function byggUthevliste() {
     const kort = el('<details class="uthevkort"' + (apneUthev.has(h.id) ? ' open' : '') + '><summary>' +
       '<span class="prikk" style="background:' + (h.farge || l.farge) + '"></span>' +
       '<span class="ordet">' + ordet + '</span>' +
-      '<button class="fjern" title="Gjør ordet likt resten">&#10005;</button>' +
+      '<button class="fjern" title="Gjør ordet likt resten" aria-label="Gjør ordet likt resten">&#10005;</button>' +
       '</summary><div class="innhold"></div></details>');
     kort.addEventListener('toggle', () => { if (kort.open) apneUthev.add(h.id); else apneUthev.delete(h.id); });
     kort.querySelector('.fjern').onclick = ev => {
@@ -6099,17 +6244,17 @@ function byggUthevliste() {
     inn.appendChild(segrad([
       { label: 'Kursiv', aktiv: !!h.kursiv, velg: () => endre(() => { h.kursiv = !h.kursiv; }, { struktur: true }) },
       { label: 'Understrek', aktiv: !!h.understrek, velg: () => endre(() => { h.understrek = !h.understrek; }, { struktur: true }) },
-      { label: 'Marker', aktiv: !!h.plate, velg: () => endre(() => { h.plate = !h.plate; }, { struktur: true }) }
+      { label: 'Tusj', aktiv: !!h.plate, velg: () => endre(() => { h.plate = !h.plate; }, { struktur: true }) }
     ]));
     if (h.plate) inn.appendChild(fargerad('Plate', () => h.plateFarge || '#ffe08a', v => { h.plateFarge = v; }));
-    const fontSel = el('<select class="felt"></select>');
+    const fontSel = el('<select class="felt" aria-label="Skrift"></select>');
     [['', 'Samme font som resten']].concat(FONTER.map(f => [f, f])).forEach(v => {
       const o = document.createElement('option');
       o.value = v[0]; o.textContent = v[1];
       if ((h.font || '') === v[0]) o.selected = true;
       fontSel.appendChild(o);
     });
-    fontSel.addEventListener('change', () => { endre(() => { h.font = fontSel.value; }); });
+    fontSel.addEventListener('change', () => { endre(() => { h.font = fontSel.value; }, { struktur: true }); });
     inn.appendChild(fontSel);
     boks.appendChild(kort);
   });
@@ -6121,7 +6266,7 @@ function byggGrafikkPanel(boks, l) {
     { label: l.bildeId ? 'Bytt bilde' : 'Velg bilde', klikk: () => {
       pickFile('image/png,image/jpeg,image/webp,image/svg+xml', false, filer => {
         lesFilerTilBilder(filer).then(ider => {
-          if (ider[0]) endre(() => { l.bildeId = ider[0]; }, { tving: true });
+          if (ider[0]) endre(() => { l.bildeId = ider[0]; }, { struktur: true, tving: true });
         });
       });
     } }
@@ -6191,9 +6336,8 @@ function byggBakgrunnPanel(boks, s) {
     ]);
     rad.children[1].onclick = ev => visBildevelger(ev.currentTarget, state.prosjekt.slides.map(x => x.id), 'Bruk bakgrunnen i', brukBakgrunn);
     boks.appendChild(rad);
-    boks.appendChild(el('<div class="varsel">Hele bakgrunnen kopieres - type, farger, bilde og gjennomgående.</div>'));
+    boks.appendChild(el('<div class="varsel">Knappene kopierer hele bakgrunnen: Type, farger, bilde og om den strekkes over serien.</div>'));
   }
-  boks.appendChild(el('<div class="varsel">Bakgrunnen gjelder dette bildet. Dupliser bildet for å gjenbruke hele oppsettet.</div>'));
 }
 
 /* =============================== Pointer handling on the canvas =============================== */
@@ -6234,6 +6378,12 @@ let drag = null;
 
 lerret.addEventListener('pointerdown', e => {
   let p = lerretPos(e);
+  // The right button opens the menu and moves nothing. On another slide it first makes that slide active.
+  if (e.button === 2 && !treffLag(p)) {
+    const j = slideVedPunkt(p);
+    if (j >= 0) { state.somSvev = -1; lerret.title = ''; byttSlide(j); tegnNaa(); }
+  }
+  if (e.button !== 0) return;
 
   // If a text is being edited, clicks inside it go to the cursor, not to moving it
   const red = redigertLag();
@@ -6258,18 +6408,17 @@ lerret.addEventListener('pointerdown', e => {
   const l = valgt();
   if (l && state._handtak) {
     const hj = state._handtak;
-    if (Math.hypot(p.x - hj.x, p.y - hj.y) < 58) {
-      merk(true);
+    if (Math.hypot(p.x - hj.x, p.y - hj.y) < hj.r) {
       const h = hitboks.get(l.id);
       const start = l[skalafelt(l)];
-      drag = { modus: 'skaler', lag: l, start: start, dist: Math.max(50, Math.hypot(p.x - h.cx, p.y - h.cy)) };
+      drag = { modus: 'skaler', lag: l, start: start, dist: Math.max(50, Math.hypot(p.x - h.cx, p.y - h.cy)), foer: JSON.stringify(state.prosjekt) };
       try { lerret.setPointerCapture(e.pointerId); } catch (err) { /* synthetic pointers have no id */ }
       dragKvalitet = true;
       return;
     }
   }
   let t = treffLag(p);
-  const tillegg = e.shiftKey || e.metaKey && false;      // Shift adds to the selection
+  const tillegg = e.shiftKey || (ER_MAC ? e.metaKey : e.ctrlKey);      // adds to the selection, as in the layer list
 
   // A click on another slide makes it the one you work in, and the layer under
   // the pointer is selected there right away
@@ -6314,10 +6463,9 @@ lerret.addEventListener('pointerdown', e => {
   if (!erMerket(t.id)) merkLag(t.id, false);
   else state.valgtLag = t.id;
   byggAlt();
-  merk(true);
   const lagene = merkedeLag();
   drag = {
-    modus: 'flytt', lag: t, p0: p,
+    modus: 'flytt', lag: t, p0: p, foer: JSON.stringify(state.prosjekt),
     // All selected layers move together, each with its own start position
     flokk: lagene.map(l => ({ lag: l, x0: l.x, y0: l.y })),
     av: gruppeAvstand(lagene, t)
@@ -6356,7 +6504,7 @@ lerret.addEventListener('pointermove', e => {
     const red = redigertLag();
     const rh = red ? hitboks.get(red.id) : null;
     if (rh && innenfor(p, rh, 14)) c = 'text';
-    else if (l && state._handtak && Math.hypot(p.x - state._handtak.x, p.y - state._handtak.y) < 58) c = 'nwse-resize';
+    else if (l && state._handtak && Math.hypot(p.x - state._handtak.x, p.y - state._handtak.y) < state._handtak.r) c = 'nwse-resize';
     else if (treffLag(p)) c = 'grab';
     const svev = c === 'default' ? slideVedPunkt(p) : -1;
     if (svev >= 0) c = 'pointer';
@@ -6395,6 +6543,7 @@ lerret.addEventListener('pointermove', e => {
     const raaY = anker.y0 + (p.y - drag.p0.y);
     const s = e.altKey ? { x: Math.round(raaX), y: Math.round(raaY), guider: [] } : snapp(l, raaX, raaY, drag.av);
     const dx = s.x - anker.x0, dy = s.y - anker.y0;
+    if (dx || dy) flyttetNaa();
     drag.flokk.forEach(k => { k.lag.x = Math.round(k.x0 + dx); k.lag.y = Math.round(k.y0 + dy); });
     oppdaterLuft(drag.flokk.map(k => k.lag));
     state._guider = s.guider;
@@ -6407,10 +6556,18 @@ lerret.addEventListener('pointermove', e => {
     if (erEnhet(l)) l.skala = klem(Math.round(drag.start * r * 1000) / 1000, 0.1, 1.2);
     else if (l.type === 'tekst') l.str = klem(Math.round(drag.start * r), 24, 280);
     else l.hoyde = klem(Math.round(drag.start * r), 40, 3000);
+    if (l[skalafelt(l)] !== drag.start) flyttetNaa();
     if (harKikk()) speilHvisPaa([skalafelt(l)]);
   }
   tegnSnart();
 });
+
+// The first real change of a drag is what makes it an undo step
+function flyttetNaa() {
+  if (drag.flyttet) return;
+  drag.flyttet = true;
+  merk(true, drag.foer);
+}
 
 // The field that changes when a layer is scaled depends on the layer type
 function skalafelt(l) { return erEnhet(l) ? 'skala' : (l.type === 'tekst' ? 'str' : 'hoyde'); }
@@ -6419,7 +6576,8 @@ function avsluttDrag(e) {
   if (!drag) return;
   const tekstvalg = drag.modus === 'tekstvalg';
   const markering = drag.modus === 'dramarkering';
-  if (drag.modus === 'flytt') {
+  const flyttet = !!drag.flyttet;
+  if (drag.modus === 'flytt' && flyttet) {
     speilHvisPaa(['x', 'y', 'luftOver']);
     // Continuous layers follow into the neighboring slides. Flag it, so it
     // doesn't look like something moved on its own.
@@ -6432,7 +6590,7 @@ function avsluttDrag(e) {
       }
     }
   }
-  else if (drag.modus === 'skaler' && drag.lag) speilHvisPaa([skalafelt(drag.lag)]);
+  else if (drag.modus === 'skaler' && flyttet) speilHvisPaa([skalafelt(drag.lag)]);
   drag = null;
   dragKvalitet = false;
   state._guider = null;
@@ -6456,7 +6614,7 @@ function avsluttDrag(e) {
   }
   byggEgenskaper();
   tegnSnart();
-  planleggLagring();
+  if (flyttet) planleggLagring();
 }
 lerret.addEventListener('pointerup', avsluttDrag);
 lerret.addEventListener('pointercancel', avsluttDrag);
@@ -6647,7 +6805,6 @@ lerret.addEventListener('contextmenu', e => {
   byggAlt();
   tegnSnart();
   const flokk = merkedeLag();
-  const s = aktivSlide();
   const flere = flokk.length > 1;
   const punkter = [];
   if (flokk.length) {
@@ -6667,8 +6824,8 @@ lerret.addEventListener('contextmenu', e => {
     punkter.push({ label: 'Legg fremst', gjor: () => flyttILagrekka(1) });
     punkter.push({ label: 'Legg bakerst', gjor: () => flyttILagrekka(-1) });
     punkter.push('-');
-    punkter.push({ label: 'Midtstill vannrett', gjor: () => flokk.forEach(l2 => midtstill(l2, 'x')) });
-    punkter.push({ label: 'Midtstill loddrett', gjor: () => flokk.forEach(l2 => midtstill(l2, 'y')) });
+    punkter.push({ label: 'Midtstill vannrett', gjor: () => midtstillMerkede('x') });
+    punkter.push({ label: 'Midtstill loddrett', gjor: () => midtstillMerkede('y') });
     if (state.prosjekt.slides.length > 1) {
       punkter.push('-');
       punkter.push({
@@ -6676,6 +6833,7 @@ lerret.addEventListener('contextmenu', e => {
         gjor: () => {
           const paa = !flokk.every(l2 => l2.spenn);
           endre(() => { flokk.forEach(l2 => { l2.spenn = paa; }); }, { struktur: true, tving: true });
+          speilHvisPaa(['spenn']);
         }
       });
     }
@@ -6687,16 +6845,19 @@ lerret.addEventListener('contextmenu', e => {
     punkter.push({ label: 'Ny Mac', gjor: () => document.getElementById('nymac').onclick() });
     punkter.push({ label: 'Ny grafikk', gjor: () => document.getElementById('nygrafikk').onclick() });
     punkter.push('-');
-    punkter.push({ label: 'Merk alt', snarvei: KMD + 'A', gjor: () => {
-      if (!s) return;
-      state.merkede = s.lag.filter(l2 => l2.synlig).map(l2 => l2.id);
-      state.valgtLag = state.merkede.length ? state.merkede[state.merkede.length - 1] : null;
-      byggAlt(); tegnSnart();
-    } });
+    punkter.push({ label: 'Merk alt', snarvei: KMD + 'A', gjor: merkAlt });
     punkter.push({ label: 'Bakgrunn', gjor: () => { merkLag('bakgrunn'); byggAlt(); tegnSnart(); } });
   }
   visMeny(e.clientX, e.clientY, punkter);
 });
+
+function merkAlt() {
+  const s = aktivSlide();
+  if (!s) return;
+  state.merkede = s.lag.filter(l => l.synlig).map(l => l.id);
+  state.valgtLag = state.merkede.length ? state.merkede[state.merkede.length - 1] : null;
+  byggAlt(); tegnSnart();
+}
 
 // Moves the whole selection to front (1) or back (-1)
 function flyttILagrekka(retning) {
@@ -6717,8 +6878,7 @@ window.addEventListener('pointerdown', e => {
   if (kontekstmeny.classList.contains('vis') && !kontekstmeny.contains(e.target)) skjulMeny();
   if (rutevindu.classList.contains('vis') && !rutevindu.contains(e.target) &&
       !document.getElementById('visningknapp').contains(e.target)) visRutevindu(false);
-  if (bildevalg.classList.contains('vis') && !bildevalg.contains(e.target) &&
-      !(e.target.classList && e.target.classList.contains('hvilke'))) lukkBildevalg();
+  if (bildevalg.classList.contains('vis') && !bildevalg.contains(e.target)) lukkBildevalg();
 }, true);
 window.addEventListener('blur', skjulMeny);
 window.addEventListener('resize', skjulMeny);
@@ -6739,15 +6899,29 @@ window.addEventListener('wheel', () => { if (kontekstmeny.classList.contains('vi
 
 window.addEventListener('keydown', e => {
   const t = e.target && e.target.tagName;
-  if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return;
   if (state.rediger) return;      // if something is being typed in the slide, the keys apply to the text
-  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+  // Esc closes the open window from any field in it, and nothing reaches the canvas behind it
+  if (e.key === 'Escape') {
+    if (kontekstmeny.classList.contains('vis')) { skjulMeny(); return; }
+    if (bildevalg.classList.contains('vis')) { lukkBildevalg(); return; }
+    if (rutevindu.classList.contains('vis')) { visRutevindu(false); return; }
+    if (document.getElementById('sjekkvisning').classList.contains('vis')) { visSjekk(false); return; }
+    if (document.getElementById('innholdsvisning').classList.contains('vis')) { visInnhold(false); return; }
+    if (document.getElementById('storvisning').classList.contains('vis')) { visStort(false); return; }
+  }
+  if (aapentOverlegg() || bildevalg.classList.contains('vis')) return;
+  // Text fields keep every key. Sliders, checkboxes and colour wells keep theirs, but not undo.
+  if (t === 'TEXTAREA' || t === 'SELECT') return;
+  const felt = t === 'INPUT';
+  if (felt && !/^(range|checkbox|radio|color)$/.test(e.target.type)) return;
+  const kmd = ER_MAC ? e.metaKey : e.ctrlKey;
+  const tast = e.key.toLowerCase();
+  if (kmd && (tast === 'z' || (!ER_MAC && tast === 'y'))) {
     e.preventDefault();
-    if (e.shiftKey) gjorOm(); else angre();
+    if (e.shiftKey || tast === 'y') gjorOm(); else angre();
     return;
   }
-  const kmd = e.metaKey || e.ctrlKey;
-  const tast = e.key.toLowerCase();
+  if (felt) return;
   const harMerket = merkedeLag().length > 0;
   if (kmd && tast === 'd' && harMerket) { e.preventDefault(); dupliserMerkede(); return; }
   if (kmd && tast === 'c' && harMerket) { e.preventDefault(); kopierMerkede(false); return; }
@@ -6761,24 +6935,12 @@ window.addEventListener('keydown', e => {
   if (kmd && tast === 'g' && harMerket) { e.preventDefault(); if (e.shiftKey) losOppGruppe(); else grupper(); return; }
   if (kmd && tast === 'a') {
     const s = aktivSlide();
-    if (s && s.lag.length) {
-      e.preventDefault();
-      state.merkede = s.lag.filter(l => l.synlig).map(l => l.id);
-      state.valgtLag = state.merkede.length ? state.merkede[state.merkede.length - 1] : null;
-      byggAlt(); tegnSnart();
-    }
+    if (s && s.lag.length) { e.preventDefault(); merkAlt(); }
     return;
   }
-  if (e.key === 'Escape') {
-    if (kontekstmeny.classList.contains('vis')) { skjulMeny(); return; }
-    if (bildevalg.classList.contains('vis')) { lukkBildevalg(); return; }
-    if (rutevindu.classList.contains('vis')) { visRutevindu(false); return; }
-    if (document.getElementById('sjekkvisning').classList.contains('vis')) { visSjekk(false); return; }
-    if (document.getElementById('innholdsvisning').classList.contains('vis')) { visInnhold(false); return; }
-    if (document.getElementById('storvisning').classList.contains('vis')) { visStort(false); return; }
-    avsluttRedigering(); nullstillMerking(); byggAlt(); tegnSnart(); return;
-  }
-  if (e.key === 'Enter') {
+  if (e.key === 'Escape') { avsluttRedigering(); nullstillMerking(); byggAlt(); tegnSnart(); return; }
+  // Enter on a button presses the button
+  if (e.key === 'Enter' && t !== 'BUTTON' && t !== 'SUMMARY') {
     const t = valgt();
     if (t && t.type === 'tekst') { e.preventDefault(); startRedigering(t, 0, (t.tekst || '').length); return; }
   }
@@ -6805,7 +6967,29 @@ window.addEventListener('keydown', e => {
   state._maalTil = Date.now() + 1500;
   clearTimeout(state._maalTimer);
   state._maalTimer = setTimeout(() => { if (!drag) state._maal = null; tegnSnart(); }, 1550);
+  // The X and Y fields catch up once the nudging pauses
+  clearTimeout(state._panelTimer);
+  state._panelTimer = setTimeout(() => {
+    document.querySelectorAll('#egenskaper .feltrad').forEach(r => { if (r.oppdater) r.oppdater(); });
+  }, 250);
   tegnSnart();
+});
+
+// A mouse click on them leaves the focus alone, so Enter still reaches the canvas shortcuts.
+// The field you were typing in is let go first, so its change is saved.
+document.addEventListener('mousedown', e => {
+  const m = e.target;
+  if (m.tagName === 'BUTTON' || !m.getAttribute || m.getAttribute('role') !== 'button') return;
+  if (document.activeElement && document.activeElement !== m) document.activeElement.blur();
+  e.preventDefault();
+});
+
+// Elements that act as buttons without being one answer to Enter and Space
+document.addEventListener('keydown', e => {
+  const m = e.target;
+  if ((e.key === 'Enter' || e.key === ' ') && m.tagName !== 'BUTTON' && m.getAttribute && m.getAttribute('role') === 'button') {
+    e.preventDefault(); e.stopPropagation(); m.click();
+  }
 });
 
 /* =============================== Copy and paste ===============================
@@ -6830,19 +7014,20 @@ function kopierMerkede(klippUt) {
   });
   state.utklipp = {
     merke: UTKLIPPSMERKE,
+    kopiId: uid(),                     // tells this window's own copy apart on the system clipboard
+    format: state.prosjekt.format,
     versjon: state.prosjekt.versjon,   // phone sizes follow the version of the project they come from
     tekstTopp: true,                   // text is placed by its top
     fraSlide: state.prosjekt.slides[state.prosjekt.aktiv] ? state.prosjekt.slides[state.prosjekt.aktiv].id : null,
     lag: JSON.parse(JSON.stringify(flokk)),
     bilder: bildekart
   };
-  // Also put it on the system clipboard, so it can be pasted into another
-  // window - but only when the package is small enough to be reasonable
+  // Also put it on the system clipboard, so it can be pasted into another window.
+  // Large screenshots stay behind; this window pastes its own copy with them.
   try {
-    const pakke = JSON.stringify(state.utklipp);
-    if (pakke.length < 2000000 && navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(pakke).catch(() => {});
-    }
+    let pakke = JSON.stringify(state.utklipp);
+    if (pakke.length >= 2000000) pakke = JSON.stringify(Object.assign({}, state.utklipp, { bilder: {}, utenBilder: true }));
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(pakke).catch(() => {});
   } catch (e) { /* not every browser allows it */ }
   if (klippUt) {
     slettMerkede(true);
@@ -6850,28 +7035,30 @@ function kopierMerkede(klippUt) {
   } else setStatus(flokk.length === 1 ? 'Laget er kopiert' : flokk.length + ' lag er kopiert');
 }
 
+// A package from another window brings its images; this window's own copy is used as it is
+async function hentPakke(data) {
+  if (state.utklipp && data.kopiId && data.kopiId === state.utklipp.kopiId) return state.utklipp;
+  for (const [id, url] of Object.entries(data.bilder || {})) {
+    if (bilder.has(id)) continue;
+    try { bilder.set(id, { url: url, img: await lastBildeFraUrl(url) }); } catch (e) { /* the layer shows without it */ }
+  }
+  return data;
+}
+
 function settInnLag(pakke) {
   const s = aktivSlide();
   if (!s || !pakke || !pakke.lag || !pakke.lag.length) return false;
   const sammeBilde = pakke.fraSlide === s.id;
+  const fraFormat = pakke.format && pakke.format !== state.prosjekt.format ? formatMaal(pakke.format) : null;
   const nye = [];
-  const gruppekart = {};
-  const idkart = {};
-  const kopier = [];
   endre(() => {
-    pakke.lag.forEach(mal => {
-      const k = JSON.parse(JSON.stringify(mal));
-      k.id = uid();
-      idkart[mal.id] = k.id;
-      kopier.push(k);
+    kopierLag(pakke.lag).forEach(k => {
       // Text from before texts were placed by their top
       if (k.type === 'tekst' && !pakke.tekstTopp) k.y = Math.round(k.y - tekstOppsett(k).blokkH / 2);
       // The role only comes along if this series has it and the slide doesn't already
       if (k.rolleId && (!rollen(k.rolleId) || s.lag.some(x => x.rolleId === k.rolleId))) { k.rolleId = null; k.avvik = {}; }
-      if (k.gruppe) {
-        if (!gruppekart[k.gruppe]) gruppekart[k.gruppe] = uid();
-        k.gruppe = gruppekart[k.gruppe];
-      }
+      // From another format the layer keeps its place relative to the slide
+      if (fraFormat) flyttMellomFormat(k, k.type, fraFormat, FMT());
       if (sammeBilde) { k.x += 40; k.y += 40; }
       if (k.type === 'tekst') ryddUthev(k);
       // A phone copied from a version 3 project keeps the size it had there
@@ -6879,11 +7066,11 @@ function settInnLag(pakke) {
       s.lag.push(k);
       nye.push(k.id);
     });
-    kopier.forEach(k => { if (k.folgerId) { if (idkart[k.folgerId]) k.folgerId = idkart[k.folgerId]; else delete k.folgerId; } });
     state.merkede = nye;
     state.valgtLag = nye[nye.length - 1];
   }, { struktur: true, tving: true });
-  setStatus(nye.length === 1 ? 'Laget er limt inn' : nye.length + ' lag er limt inn');
+  setStatus(pakke.utenBilder ? 'Lagene er limt inn uten skjermbilder. De var for store for utklippstavlen.'
+    : nye.length === 1 ? 'Laget er limt inn' : nye.length + ' lag er limt inn');
   return true;
 }
 
@@ -6906,10 +7093,7 @@ async function limInn() {
       const tekst = await navigator.clipboard.readText();
       const data = JSON.parse(tekst);
       if (data && data.merke === UTKLIPPSMERKE) {
-        for (const [id, url] of Object.entries(data.bilder || {})) {
-          if (!bilder.has(id)) bilder.set(id, { url: url, img: await lastBildeFraUrl(url) });
-        }
-        settInnLag(data);
+        settInnLag(await hentPakke(data));
         return;
       }
     }
@@ -6922,25 +7106,17 @@ function dupliserMerkede() {
   const flokk = merkedeLag();
   const s = aktivSlide();
   if (!flokk.length || !s) return;
-  const nye = [];
-  const gruppekart = {};
-  const idkart = {};
-  const kopier = [];
+  // The copies keep the layer order among themselves and go right above the topmost original
+  const ordnet = flokk.slice().sort((a, b) => s.lag.indexOf(a) - s.lag.indexOf(b));
+  let nye = [];
   endre(() => {
-    flokk.forEach(l => {
-      const k = JSON.parse(JSON.stringify(l));
-      k.id = uid(); k.x += 40; k.y += 40;
-      idkart[l.id] = k.id;
-      kopier.push(k);
+    const kopier = kopierLag(ordnet);
+    kopier.forEach(k => {
+      k.x += 40; k.y += 40;
       k.rolleId = null; k.avvik = {};      // a copy is its own layer, not the role
-      if (k.gruppe) {
-        if (!gruppekart[k.gruppe]) gruppekart[k.gruppe] = uid();
-        k.gruppe = gruppekart[k.gruppe];
-      }
-      s.lag.splice(s.lag.indexOf(l) + 1, 0, k);
-      nye.push(k.id);
     });
-    kopier.forEach(k => { if (k.folgerId) { if (idkart[k.folgerId]) k.folgerId = idkart[k.folgerId]; else delete k.folgerId; } });
+    s.lag.splice(s.lag.indexOf(ordnet[ordnet.length - 1]) + 1, 0, ...kopier);
+    nye = kopier.map(k => k.id);
     state.merkede = nye;
     state.valgtLag = nye[nye.length - 1];
   }, { struktur: true, tving: true });
@@ -6964,6 +7140,7 @@ function slettMerkede(stille) {
 window.addEventListener('paste', e => {
   const t = e.target && e.target.tagName;
   if (t === 'INPUT' || t === 'TEXTAREA') return;
+  if (aapentOverlegg() || bildevalg.classList.contains('vis')) return;
   state._venterPaste = false;
   clearTimeout(pasteTimer);
   const filer = [];
@@ -7000,12 +7177,7 @@ window.addEventListener('paste', e => {
   }
   if (vaart) {
     e.preventDefault();
-    (async () => {
-      for (const [id, url] of Object.entries(vaart.bilder || {})) {
-        if (!bilder.has(id)) bilder.set(id, { url: url, img: await lastBildeFraUrl(url) });
-      }
-      settInnLag(vaart);
-    })();
+    hentPakke(vaart).then(settInnLag);
     return;
   }
   // Nothing on the clipboard we recognize: use our own clipboard
@@ -7014,10 +7186,13 @@ window.addEventListener('paste', e => {
 
 /* =============================== Export and project files =============================== */
 
+function filnavnStamme() {
+  return (state.prosjekt.appnavn || '').trim().replace(/\s+/g, '-').toLowerCase() || 'app';
+}
+
 function filnavn(i) {
   const F = FMT();
-  const n = (state.prosjekt.appnavn || 'app').trim().replace(/\s+/g, '-').toLowerCase();
-  return n + '-' + F.w + 'x' + F.h + '-' + (i + 1) + '.png';
+  return filnavnStamme() + '-' + F.w + 'x' + F.h + '-' + (i + 1) + '.png';
 }
 
 function lastNedBlob(blob, navn) {
@@ -7057,8 +7232,7 @@ function lagreProsjektfil() {
   const bildekart = {};
   brukteBildeIder().forEach(id => { const b = bilder.get(id); if (b) bildekart[id] = b.url; });
   const blob = new Blob([JSON.stringify({ versjon: 2, prosjekt: state.prosjekt, bilder: bildekart })], { type: 'application/json' });
-  const n = (state.prosjekt.appnavn || 'app').trim().replace(/\s+/g, '-').toLowerCase();
-  lastNedBlob(blob, n + '-fasade.json');
+  lastNedBlob(blob, filnavnStamme() + '-fasade.json');
   setStatus('Prosjektet er lagret som fil');
 }
 
@@ -7103,6 +7277,8 @@ function husFormat(fmt) {
   state.prosjekt.slides.forEach(s => s.lag.forEach(l => {
     const g = {};
     GEOMETRI.forEach(f => { if (typeof l[f] === 'number') g[f] = l[f]; });
+    // Geometry is per format, so the deviations in it are too
+    g.avvikGeometri = GEOMETRI.filter(f => l.avvik && l.avvik[f]);
     lager[l.id] = g;
   }));
   state.prosjekt.formatminne[fmt] = { lag: lager, mal: kopiVerdi(state.prosjekt.mal) };
@@ -7112,7 +7288,13 @@ function hentFormat(minne, A, B) {
   const kjent = new Set();
   state.prosjekt.slides.forEach(s => s.lag.forEach(l => {
     const g = minne.lag[l.id];
-    if (g) { Object.assign(l, g); kjent.add(l); }
+    if (!g) return;
+    GEOMETRI.forEach(f => { if (typeof g[f] === 'number') l[f] = g[f]; });
+    if (g.avvikGeometri) {
+      l.avvik = l.avvik || {};
+      GEOMETRI.forEach(f => { if (g.avvikGeometri.indexOf(f) >= 0) l.avvik[f] = true; else delete l.avvik[f]; });
+    }
+    kjent.add(l);
   }));
   const kjenteRoller = new Set();
   if (minne.mal && state.prosjekt.mal) {
@@ -7181,15 +7363,23 @@ function nySerieFra(gammel, format) {
   p.format = format;
   p.mal = mal;
   p.mellomrom = BUTIKKMAAL[serieFor(format)][0].mellomrom;
+  // A text is matched by its role's name, so a layer renamed in one slide still comes along
+  const rollenavn = x => { const r = gammel.mal.roller.find(o => o.id === x.rolleId); return r ? r.navn : x.navn; };
+  let igjen = 0;
   p.slides = gammel.slides.map(gs => {
     const s = { id: uid(), bakgrunn: kopiVerdi(gs.bakgrunn), lag: mal.roller.map(lagFraRolle) };
+    const brukte = new Set();
     s.lag.forEach(l => {
-      const g = l.type === 'tekst' && gs.lag.find(x => x.type === 'tekst' && x.navn === l.navn);
-      if (g) { l.tekst = g.tekst; l.uthev = kopiVerdi(g.uthev); }
+      if (l.type !== 'tekst') return;
+      const g = gs.lag.find(x => x.type === 'tekst' && !brukte.has(x) && rollenavn(x) === l.navn);
+      if (g) { brukte.add(g); l.tekst = g.tekst; l.uthev = kopiVerdi(g.uthev); }
+      else if (l.navn === 'Undertekst') l.tekst = EKSEMPEL_UNDERTEKST;
     });
+    igjen += gs.lag.filter(x => x.type === 'tekst' && !brukte.has(x) && (x.tekst || '').trim()).length;
     return s;
   });
   p.aktiv = klem(gammel.aktiv || 0, 0, p.slides.length - 1);
+  return igjen;
 }
 
 function byttFormat(nytt) {
@@ -7208,9 +7398,10 @@ function byttFormat(nytt) {
         Object.assign(p, { format: lagret.format, slides: lagret.slides, mal: lagret.mal, aktiv: lagret.aktiv, mellomrom: lagret.mellomrom });
         melding = 'Hentet frem ' + navn[til];
       } else {
-        nySerieFra(p.serier[fra], nytt);
+        const igjen = nySerieFra(p.serier[fra], nytt);
         melding = (til === 'mac' ? 'Mac-serien' : 'Serien for iPhone og iPad') + ' har fått tekstene og utseendet fra ' +
-          navn[fra] + '. Legg til skjermbilder.';
+          navn[fra] + '. ' + (igjen ? (igjen === 1 ? 'Én tekst' : igjen + ' tekster') + ' utenom overskrift og undertekst kom ikke med. ' : '') +
+          'Legg til skjermbilder.';
       }
       nullstillMerking();
       state.malUtvalg = [];
@@ -7385,8 +7576,7 @@ function byggTopp() {
   sel.title = FORMATER[state.prosjekt.format].helt;
   const an = document.getElementById('appnavn');
   if (document.activeElement !== an) an.value = state.prosjekt.appnavn;
-  document.getElementById('angreknapp').disabled = !state.angre.length;
-  document.getElementById('gjortknapp').disabled = !state.gjor.length;
+  oppdaterAngreknapper();
 }
 
 function byggAlt() {
@@ -7541,14 +7731,14 @@ window.app = {
 function visFeilbanner(tekst) {
   let b = document.getElementById('feilbanner');
   if (!b) {
-    b = document.createElement('div');
-    b.id = 'feilbanner';
+    b = el('<div id="feilbanner" role="alert"><span></span><button class="minknapp">Lukk</button></div>');
     b.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:1000;' +
-      'max-width:640px;padding:12px 18px;border-radius:11px;background:#9b2c2c;color:#fff;' +
-      'font-size:13px;line-height:1.45;box-shadow:0 8px 30px rgba(0,0,0,.3)';
+      'display:flex;align-items:center;gap:12px;max-width:640px;padding:12px 18px;border-radius:11px;' +
+      'background:#9b2c2c;color:#fff;font-size:13px;line-height:1.45;box-shadow:0 8px 30px rgba(0,0,0,.3)';
+    b.querySelector('button').onclick = () => b.remove();
     document.body.appendChild(b);
   }
-  b.textContent = tekst;
+  b.firstChild.textContent = tekst;
 }
 
 // No matter what fails during startup, the background, text and the rest
