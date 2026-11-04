@@ -694,6 +694,12 @@ const MACFARGER = [
   { id: 'midnatt',      navn: 'Midnatt',      hex: '#2e3440', lys: '#4b5262', mork: '#191d24' }
 ];
 function macFarge(lag) { return MACFARGER.find(f => f.id === lag.variant) || MACFARGER[1]; }
+function normaliserMac(l) {
+  l.variant = macFarge(l).id;
+  if (l.visning !== 'skjerm') l.visning = 'mac';
+  if (typeof l.hakk !== 'boolean') l.hakk = true;
+  if (typeof l.menyKlokke !== 'string') l.menyKlokke = '';
+}
 
 // The frames are embedded as data URIs so the tool also works when the file
 // is opened directly from Finder (file://) without a web server. Data URIs also never
@@ -744,7 +750,7 @@ const HJORNE = 0.045;      // the rounding of the screenshots in the store
 const EKSPORTGRUNN = '#ffffff';
 
 // Semantic version (MAJOR.MINOR.PATCH); the README says when each part goes up
-const VERSJON = '1.5.0';
+const VERSJON = '1.6.0';
 
 // Shortcut labels: ⌘ and ⇧ on a Mac, Ctrl+ and Skift+ elsewhere
 const ER_MAC = !!navigator.platform && /Mac/i.test(navigator.platform);
@@ -822,7 +828,10 @@ function nyttMaclag(over) {
     rolleId: null, avvik: {},
     skala: 0.6, opasitet: 100,
     variant: 'solv',                  // an id in MACFARGER
+    visning: 'mac',                   // 'mac': the whole MacBook, 'skjerm': the screen alone
+    hakk: true,                       // the notch over the bare screen
     skjermbildeId: null,
+    menyKlokke: '',                   // the menu bar clock's text; empty keeps the screenshot's
     skygge: 45,
     zoom: 100, panX: 0, panY: 0
   }, over || {});
@@ -1121,7 +1130,7 @@ function normaliserSerie(p) {
       if (!l.avvik) l.avvik = {};
       if (l.type === 'telefon' && !l.statuslinje) { l.statuslinje = 'behold'; l.statuslinjeKilde = null; }
       if (l.type === 'telefon' && !MODELLER[l.modell]) l.modell = '17pro';
-      if (l.type === 'mac') l.variant = macFarge(l).id;
+      if (l.type === 'mac') normaliserMac(l);
       if (l.type !== 'tekst') return;
       const nt = nyttTekstlag();
       ['platePadX', 'platePadY', 'plateRadius', 'plateOpasitet', 'tekstOpasitet'].forEach(f => {
@@ -1135,7 +1144,7 @@ function normaliserSerie(p) {
   if (p.mal) p.mal.roller.forEach(r => {
     if (r.type === 'telefon' && !r.felt.statuslinje) { r.felt.statuslinje = 'behold'; r.felt.statuslinjeKilde = null; }
     if (r.type === 'telefon' && !MODELLER[r.felt.modell]) r.felt.modell = '17pro';
-    if (r.type === 'mac') r.felt.variant = macFarge(r.felt).id;
+    if (r.type === 'mac') normaliserMac(r.felt);
   });
 }
 
@@ -2396,6 +2405,153 @@ function skjermbildeMedStatuslinje(lag, img) {
   return c;
 }
 
+/* =============================== Menu bar clock ===============================
+
+   macOS draws the menu bar over the wallpaper, so the clock cannot be covered
+   with one colour. Fasade finds the clock at the right end of the menu bar,
+   paints the background back from the pixels around it (a Coons patch) and
+   writes the new text in the system font at the clock's size and colour. */
+
+const MENYLINJE_PT = 13.5;         // the clock's text size in points, measured on macOS 27
+const MENYLINJE_KONTRAST = 40;     // luminance difference that marks a glyph pixel
+const MENYLINJE_GLIPE = 12;        // points; a wider gap ends the clock (words are 6 apart)
+
+// Finds the clock: the rightmost run of glyphs in the menu bar. Cached per image.
+const menylinjeAnalyser = new WeakMap();
+function analyserMenylinje(img) {
+  if (menylinjeAnalyser.has(img)) return menylinjeAnalyser.get(img);
+  const W = img.width;
+  const k0 = W >= 2000 ? 2 : 1;                   // first guess at pixels per point
+  const topp = k0, bunn = Math.min(img.height - 1, Math.round(W * 30 / 1470));   // rows inside the bar, clear of glyphs
+  const x0 = Math.floor(W / 2), B = W - x0;
+  const c = document.createElement('canvas');
+  c.width = B; c.height = bunn + 1;
+  const x = c.getContext('2d', { willReadFrequently: true });
+  x.drawImage(img, -x0, 0);
+  const d = x.getImageData(0, 0, B, bunn + 1).data;
+  const lum = (px, y) => { const i = (y * B + px) * 4; return 0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2]; };
+  // How far a pixel is from the background, read as a straight line from the top row to the bottom row
+  const avvik = (px, y) => lum(px, y) - (lum(px, topp) + (lum(px, bunn) - lum(px, topp)) * (y - topp) / (bunn - topp));
+  const harTegn = px => { for (let y = topp + 1; y < bunn; y++) if (Math.abs(avvik(px, y)) > MENYLINJE_KONTRAST) return true; return false; };
+  const glipe = MENYLINJE_GLIPE * k0;
+  let h = -1, v = -1, nabo = -1;
+  for (let px = B - 1; px >= 0; px--) {
+    if (!harTegn(px)) continue;
+    if (h < 0) h = px;
+    else if (v - px > glipe) { nabo = px; break; }
+    v = px;
+  }
+  let svar = { ok: false };
+  if (h >= 0 && h > B * 0.6) {
+    const rader = [];
+    let maks = 0, sterkest = 0;
+    for (let y = topp + 1; y < bunn; y++) {
+      let n = 0;
+      for (let px = v; px <= h; px++) {
+        const a = avvik(px, y);
+        if (Math.abs(a) > MENYLINJE_KONTRAST) n++;
+        if (Math.abs(a) > Math.abs(sterkest)) sterkest = a;
+      }
+      rader.push(n); maks = Math.max(maks, n);
+    }
+    const forste = rader.findIndex(n => n > 0) + topp + 1;
+    let siste = rader.length - 1; while (rader[siste] === 0) siste--;
+    let grunn = siste; while (rader[grunn] < maks * 0.25) grunn--;   // descenders end below the baseline
+    // The glyph colour: the pixels that differ as much as the strongest one
+    const sum = [0, 0, 0]; let antall = 0;
+    for (let y = forste; y <= siste + topp + 1; y++) for (let px = v; px <= h; px++) {
+      const a = avvik(px, y);
+      if (Math.sign(a) === Math.sign(sterkest) && Math.abs(a) >= Math.abs(sterkest) * 0.9) {
+        const i = (y * B + px) * 4; sum[0] += d[i]; sum[1] += d[i + 1]; sum[2] += d[i + 2]; antall++;
+      }
+    }
+    // Digits and ascenders reach about 0.73 em above the baseline
+    let k = (grunn + topp + 2 - forste) / (MENYLINJE_PT * 0.73);
+    if (Math.abs(k - Math.round(k)) < 0.1 * Math.round(k)) k = Math.round(k);
+    svar = {
+      ok: true, k: k,
+      v: x0 + v, h: x0 + h + 1, topp: forste, bunn: siste + topp + 2, grunnlinje: grunn + topp + 2,
+      nabo: nabo < 0 ? 0 : x0 + nabo + 1, bunnRad: bunn,
+      farge: 'rgb(' + sum.map(s => Math.round(s / antall)).join(',') + ')'
+    };
+  }
+  menylinjeAnalyser.set(img, svar);
+  return svar;
+}
+
+// The new clock text set right-aligned where the clock ends, in the screenshot's pixels
+function klokkeTekst(x, a, tekst) {
+  x.font = '400 ' + MENYLINJE_PT + 'px system-ui, -apple-system, sans-serif';
+  const m = x.measureText(tekst);
+  return { m: m, v: a.h - (m.actualBoundingBoxRight + m.actualBoundingBoxLeft) * a.k };
+}
+
+// What the Mac layer's clock setting can do with its screenshot. `feil` is shown in the panel and in «Sjekk serien».
+function menylinjeStatus(lag) {
+  const tekst = (lag.menyKlokke || '').trim();
+  const skjerm = lag.skjermbildeId && bilder.get(lag.skjermbildeId);
+  if (!tekst || !skjerm || !skjerm.img) return { endre: false };
+  const a = analyserMenylinje(skjerm.img);
+  if (!a.ok) return { endre: false, feil: 'Fasade finner ikke klokken i menylinjen, så skjermbildet vises uendret.' };
+  const svar = { endre: true, a: a, tekst: tekst };
+  if (klokkeTekst(malCtx, a, tekst).v < a.nabo + 4 * a.k) svar.feil = 'Klokken er bredere enn plassen og dekker symbolet til venstre. Gjør teksten kortere.';
+  return svar;
+}
+
+const menylinjeCache = new Map();   // key -> canvas
+// The screenshot as the Mac shows it, with the clock text applied
+function skjermbildeMedMenylinje(lag, img) {
+  const st = menylinjeStatus(lag);
+  if (!st.endre) return img;
+  const key = lag.skjermbildeId + '|' + st.tekst;
+  if (menylinjeCache.has(key)) return menylinjeCache.get(key);
+  const a = st.a, W = img.width;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = img.height;
+  const x = c.getContext('2d', { willReadFrequently: true });
+  x.drawImage(img, 0, 0);
+  // The patch: each pixel blends the four edges just outside the clock, smoothed along each edge
+  const luft = 2 * a.k;
+  const x0 = Math.max(1, Math.floor(a.v - luft)), x1 = Math.min(W - 2, Math.ceil(a.h + luft));
+  const y0 = Math.max(1, Math.floor(a.topp - luft)), y1 = Math.min(a.bunnRad, Math.ceil(a.bunn + luft));
+  const bw = x1 - x0 + 3, bh = y1 - y0 + 3;
+  const ut = x.getImageData(x0 - 1, y0 - 1, bw, bh), p = ut.data;
+  const pix = (px, py) => (py * bw + px) * 4;
+  const kant = (fra, steg, n) => {
+    const r = [];
+    for (let i = 0; i < n; i++) {
+      const s = [0, 0, 0]; let t = 0;
+      for (let j = Math.max(0, i - 2); j <= Math.min(n - 1, i + 2); j++) { const o = fra + j * steg; s[0] += p[o]; s[1] += p[o + 1]; s[2] += p[o + 2]; t++; }
+      r.push(s.map(v => v / t));
+    }
+    return r;
+  };
+  const T = kant(pix(0, 0), 4, bw), Bn = kant(pix(0, bh - 1), 4, bw);
+  const L = kant(pix(0, 0), bw * 4, bh), R = kant(pix(bw - 1, 0), bw * 4, bh);
+  for (let py = 1; py < bh - 1; py++) {
+    const vv = py / (bh - 1);
+    for (let px = 1; px < bw - 1; px++) {
+      const u = px / (bw - 1), o = pix(px, py);
+      for (let ch = 0; ch < 3; ch++) {
+        p[o + ch] = Math.round((1 - u) * L[py][ch] + u * R[py][ch] + (1 - vv) * T[px][ch] + vv * Bn[px][ch]
+          - ((1 - u) * (1 - vv) * T[0][ch] + u * (1 - vv) * T[bw - 1][ch] + (1 - u) * vv * Bn[0][ch] + u * vv * Bn[bw - 1][ch]));
+      }
+    }
+  }
+  x.putImageData(ut, x0 - 1, y0 - 1);
+  // Drawn at the size in points and scaled up, so the browser picks the system font's text cut
+  const t = klokkeTekst(x, a, st.tekst);
+  x.save();
+  x.translate(t.v, a.grunnlinje);
+  x.scale(a.k, a.k);
+  x.fillStyle = a.farge;
+  x.fillText(st.tekst, t.m.actualBoundingBoxLeft, 0);
+  x.restore();
+  if (menylinjeCache.size > 12) menylinjeCache.delete(menylinjeCache.keys().next().value);
+  menylinjeCache.set(key, c);
+  return c;
+}
+
 /* =============================== Phone texture and cache =============================== */
 
 const teksturCache = new Map();   // key -> canvas (frame + screenshot composited)
@@ -2477,8 +2633,10 @@ function telefonSnapshot(lag, m, kvalitet) {
 // Pixels per mm for a Mac at scale 1: the whole Mac fills the format's width or height
 function macFaktor(F) { return Math.min(F.w / MAC.W, F.h / MAC.H); }
 
+// The bare screen keeps the size it has in the Mac, so switching view keeps the scale
 function macMaal(lag) {
   const mm = macFaktor(FMT()) * lag.skala;
+  if (lag.visning === 'skjerm') return { mm: mm, pw: MAC.skjerm.b * mm, ph: MAC.skjerm.h * mm };
   return { mm: mm, pw: MAC.W * mm, ph: MAC.H * mm };
 }
 
@@ -2493,11 +2651,66 @@ function hjorneRekt(x, rx, ry, w, h, r) {
   x.closePath();
 }
 
+// The screenshot filling the screen rectangle S, in mm
+function tegnMacSkjerm(x, lag, S) {
+  const skjerm = lag.skjermbildeId ? bilder.get(lag.skjermbildeId) : null;
+  if (skjerm && skjerm.img) {
+    const img = skjermbildeMedMenylinje(lag, skjerm.img);
+    const s = Math.max(S.b / img.width, S.h / img.height) * (lag.zoom / 100);
+    const w = img.width * s, h = img.height * s;
+    x.imageSmoothingQuality = 'high';
+    x.drawImage(img, S.x + (S.b - w) / 2 - (lag.panX / 100) * (w - S.b) / 2,
+      S.y + (S.h - h) / 2 - (lag.panY / 100) * (h - S.h) / 2, w, h);
+  } else {
+    x.fillStyle = '#eceae2';
+    x.fillRect(S.x, S.y, S.b, S.h);
+    x.fillStyle = '#a9a79d';
+    x.font = "600 12px 'Figtree', sans-serif";
+    x.textAlign = 'center';
+    x.textBaseline = 'middle';
+    x.fillText('Velg skjermbilde', S.x + S.b / 2, S.y + S.h / 2);
+  }
+}
+
+// The notch at the top of the screen rectangle S, with small fillets where it meets the bezel, and the camera in it
+function tegnHakk(x, S) {
+  const N = MAC.hakk;
+  const nx = S.x + (S.b - N.b) / 2, fl = 0.8;
+  x.beginPath();
+  x.moveTo(nx - fl, S.y);
+  x.arcTo(nx, S.y, nx, S.y + fl, fl);
+  x.arcTo(nx, S.y + N.h, nx + N.r, S.y + N.h, N.r);
+  x.arcTo(nx + N.b, S.y + N.h, nx + N.b, S.y + N.h - N.r, N.r);
+  x.arcTo(nx + N.b, S.y, nx + N.b + fl, S.y, fl);
+  x.lineTo(nx + N.b + fl, S.y - 0.5);
+  x.lineTo(nx - fl, S.y - 0.5);
+  x.closePath();
+  x.fillStyle = '#0b0b0d';
+  x.fill();
+  const kx = S.x + S.b / 2, ky = S.y + N.h * 0.45;
+  x.fillStyle = '#16181d';
+  x.beginPath(); x.arc(kx, ky, 1.1, 0, Math.PI * 2); x.fill();
+  x.fillStyle = '#0f1a2b';
+  x.beginPath(); x.arc(kx, ky, 0.5, 0, Math.PI * 2); x.fill();
+  x.fillStyle = 'rgba(120,150,200,.45)';
+  x.beginPath(); x.arc(kx - 0.18, ky - 0.18, 0.15, 0, Math.PI * 2); x.fill();
+}
+
+// The screen alone, as square as the screenshot, with the screen's top left corner at 0,0
+function tegnBareSkjerm(x, lag) {
+  const S = { x: 0, y: 0, b: MAC.skjerm.b, h: MAC.skjerm.h };
+  x.save();
+  x.beginPath(); x.rect(0, 0, S.b, S.h); x.clip();
+  tegnMacSkjerm(x, lag, S);
+  x.restore();
+  if (lag.hakk) tegnHakk(x, S);
+}
+
 // The Mac drawn flat in mm, with the lid's top left corner at 0,0 and the base centred under it
 function tegnMacKropp(x, lag) {
   const f = macFarge(lag);
   const ut = (MAC.W - MAC.b) / 2;
-  const S = MAC.skjerm, N = MAC.hakk;
+  const S = MAC.skjerm;
   const loddrett = (y0, y1, stopp) => {
     const g = x.createLinearGradient(0, y0, 0, y1);
     stopp.forEach(st => g.addColorStop(st[0], st[1]));
@@ -2519,45 +2732,9 @@ function tegnMacKropp(x, lag) {
   x.save();
   hjorneRekt(x, S.x, S.y, S.b, S.h, [S.r, S.r, 0, 0]);
   x.clip();
-  const skjerm = lag.skjermbildeId ? bilder.get(lag.skjermbildeId) : null;
-  if (skjerm && skjerm.img) {
-    const img = skjerm.img;
-    const s = Math.max(S.b / img.width, S.h / img.height) * (lag.zoom / 100);
-    const w = img.width * s, h = img.height * s;
-    x.imageSmoothingQuality = 'high';
-    x.drawImage(img, S.x + (S.b - w) / 2 - (lag.panX / 100) * (w - S.b) / 2,
-      S.y + (S.h - h) / 2 - (lag.panY / 100) * (h - S.h) / 2, w, h);
-  } else {
-    x.fillStyle = '#eceae2';
-    x.fillRect(S.x, S.y, S.b, S.h);
-    x.fillStyle = '#a9a79d';
-    x.font = "600 12px 'Figtree', sans-serif";
-    x.textAlign = 'center';
-    x.textBaseline = 'middle';
-    x.fillText('Velg skjermbilde', S.x + S.b / 2, S.y + S.h / 2);
-  }
+  tegnMacSkjerm(x, lag, S);
   x.restore();
-
-  // The notch, with small fillets where it meets the bezel, and the camera in it
-  const nx = S.x + (S.b - N.b) / 2, fl = 0.8;
-  x.beginPath();
-  x.moveTo(nx - fl, S.y);
-  x.arcTo(nx, S.y, nx, S.y + fl, fl);
-  x.arcTo(nx, S.y + N.h, nx + N.r, S.y + N.h, N.r);
-  x.arcTo(nx + N.b, S.y + N.h, nx + N.b, S.y + N.h - N.r, N.r);
-  x.arcTo(nx + N.b, S.y, nx + N.b + fl, S.y, fl);
-  x.lineTo(nx + N.b + fl, S.y - 0.5);
-  x.lineTo(nx - fl, S.y - 0.5);
-  x.closePath();
-  x.fillStyle = '#0b0b0d';
-  x.fill();
-  const kx = S.x + S.b / 2, ky = S.y + N.h * 0.45;
-  x.fillStyle = '#16181d';
-  x.beginPath(); x.arc(kx, ky, 1.1, 0, Math.PI * 2); x.fill();
-  x.fillStyle = '#0f1a2b';
-  x.beginPath(); x.arc(kx, ky, 0.5, 0, Math.PI * 2); x.fill();
-  x.fillStyle = 'rgba(120,150,200,.45)';
-  x.beginPath(); x.arc(kx - 0.18, ky - 0.18, 0.15, 0, Math.PI * 2); x.fill();
+  tegnHakk(x, S);
 
   // Hinge
   const hy = MAC.lokkH;
@@ -2585,13 +2762,14 @@ function tegnMacKropp(x, lag) {
 const macCache = new Map();   // key -> canvas with the Mac at its size on the slide
 function macSnapshot(lag, m, kvalitet) {
   const ss = kvalitet === 'fin' ? 1 : 0.6;
-  const key = [lag.variant, lag.skjermbildeId || 'tom', lag.zoom, lag.panX, lag.panY, Math.round(m.pw), ss].join('|');
+  const key = [lag.visning, lag.hakk, lag.variant, lag.skjermbildeId || 'tom', lag.menyKlokke, lag.zoom, lag.panX, lag.panY, Math.round(m.pw), ss].join('|');
   if (macCache.has(key)) return macCache.get(key);
   const c = document.createElement('canvas');
   c.width = Math.max(1, Math.ceil(m.pw * ss)); c.height = Math.max(1, Math.ceil(m.ph * ss));
   const x = c.getContext('2d');
   x.scale(m.mm * ss, m.mm * ss);
-  tegnMacKropp(x, lag);
+  if (lag.visning === 'skjerm') tegnBareSkjerm(x, lag);
+  else tegnMacKropp(x, lag);
   if (macCache.size > 12) macCache.delete(macCache.keys().next().value);
   macCache.set(key, c);
   return c;
@@ -2602,18 +2780,20 @@ function tegnMac(ctx, lag, kvalitet) {
   const x0 = lag.x - m.pw / 2, y0 = lag.y - m.ph / 2;
   ctx.globalAlpha = lag.opasitet / 100;
   if (lag.skygge > 0) {
-    // A soft shadow behind the lid and a tight one where the base meets the ground
-    const s = lag.skygge / 100;
+    // A soft shadow behind the lid or the bare screen, and for the Mac a tight one where the base meets the ground
+    const s = lag.skygge / 100, bare = lag.visning === 'skjerm', inn = bare ? 0.04 : 0.06;
     ctx.save();
     ctx.fillStyle = '#0d0f0c';
     ctx.filter = 'blur(' + Math.round(m.mm * 9 * s + 4) + 'px)';
     ctx.globalAlpha *= Math.min(0.5, s * 0.55);
-    ctx.fillRect(x0 + m.pw * 0.06, y0 + m.ph * 0.06, m.pw * 0.88, m.ph * 0.96);
-    ctx.filter = 'blur(' + Math.round(m.mm * 1.6 + 2) + 'px)';
-    ctx.globalAlpha = (lag.opasitet / 100) * Math.min(0.75, s * 0.9);
-    ctx.beginPath();
-    ctx.ellipse(lag.x, y0 + m.ph - m.mm * 0.4, m.pw * 0.49, m.mm * 2.2, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillRect(x0 + m.pw * inn, y0 + m.ph * 0.06, m.pw * (1 - 2 * inn), m.ph * 0.96);
+    if (!bare) {
+      ctx.filter = 'blur(' + Math.round(m.mm * 1.6 + 2) + 'px)';
+      ctx.globalAlpha = (lag.opasitet / 100) * Math.min(0.75, s * 0.9);
+      ctx.beginPath();
+      ctx.ellipse(lag.x, y0 + m.ph - m.mm * 0.4, m.pw * 0.49, m.mm * 2.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.restore();
   }
   ctx.drawImage(macSnapshot(lag, m, kvalitet), x0, y0, m.pw, m.ph);
@@ -5203,17 +5383,19 @@ function publiseringssjekk() {
               tekst: navn + ': Skjermbildet er ' + bilde.img.width + ' × ' + bilde.img.height + ' px og har en annen form enn skjermen på MacBook Air 13 tommer. ' +
                      'Fasade klipper det til skjermen. Ta et skjermbilde av hele skjermen med ⇧⌘3, så kommer alt med.' });
           }
+          const mst = menylinjeStatus(l);
+          if (mst.feil) funn.push({ alvor: 'advarsel', hvor: hvor, i: i, lag: l.id, tekst: navn + ': ' + mst.feil });
         }
       }
 
-      // Text that crosses an edge is cut off. A phone or graphic that crosses
-      // an edge is a deliberate crop; only crowding the margin is reported.
+      // Text that crosses an edge is cut off. A phone or graphic that crosses or touches
+      // an edge is a deliberate crop; only a layer clear of every edge is checked for the margin.
       if (b && !l.spenn) {
         const avstand = [b.v, F.w - b.h, b.t, F.h - b.b];   // negative: crosses that edge
         if (l.type === 'tekst' && avstand.some(d => d < 0)) {
           funn.push({ alvor: 'feil', hvor: hvor, i: i, lag: l.id,
             tekst: navn + ' går utenfor bildet og blir klippet.' });
-        } else if (avstand.some(d => d >= 0 && d < marg)) {
+        } else if (avstand.every(d => d > 0) && avstand.some(d => d < marg)) {
           funn.push({ alvor: 'advarsel', hvor: hvor, i: i, lag: l.id,
             tekst: navn + ' står nærmere kanten enn margen på ' + tall(margProsent) + ' %. Flytt laget lenger inn.' });
         }
@@ -6027,6 +6209,7 @@ const FELTNAVN = {
   kantlinje: 'kantlinje', kantFarge: 'kantfarge', variant: 'telefonfarge', modell: 'modell', skala: 'størrelse',
   tiltX: 'tilt', tiltY: 'tilt', tiltZ: 'tilt', persp: 'perspektiv', zoom: 'utsnitt',
   panX: 'utsnitt', panY: 'utsnitt', statuslinje: 'statuslinje', statuslinjeKilde: 'statuslinje',
+  visning: 'ramme', hakk: 'notch', menyKlokke: 'klokke i menylinjen',
   hoyde: 'høyde', beskjar: 'beskjæring',
   flippH: 'speilvending', flippV: 'speilvending', fargelegg: 'fargelegging',
   fargeleggFarge: 'fargelegging', spenn: 'gjennomgående', type: 'type', c1: 'farge',
@@ -6138,14 +6321,55 @@ function byggTelefonPanel(boks, l) {
 function byggMacPanel(boks, l) {
   const norm = nyttMaclag();
   boks.appendChild(skjermbilderad(l));
-  boks.appendChild(el('<div style="font-size:12px;color:var(--gra);margin-top:2px">MacBook Air 13 tommer</div>'));
-  boks.appendChild(fargegrid(MACFARGER, l));
+  boks.appendChild(el('<div style="font-size:12px;color:var(--gra);margin-top:2px">Ramme</div>'));
+  boks.appendChild(segrad([
+    { label: 'MacBook Air', aktiv: l.visning !== 'skjerm', velg: () => endre(() => { l.visning = 'mac'; }, { struktur: true }) },
+    { label: 'Bare skjermen', aktiv: l.visning === 'skjerm', velg: () => endre(() => { l.visning = 'skjerm'; }, { struktur: true }) }
+  ], ['visning']));
+  if (l.visning === 'skjerm') {
+    boks.appendChild(segrad([
+      { label: 'Med notch', aktiv: l.hakk, velg: () => endre(() => { l.hakk = true; }, { struktur: true }) },
+      { label: 'Uten notch', aktiv: !l.hakk, velg: () => endre(() => { l.hakk = false; }, { struktur: true }) }
+    ], ['hakk']));
+    // The whole screenshot as large as it fits; rounded up, so at most a pixel goes past the top and bottom
+    boks.appendChild(knapperad([{ label: 'Fyll høyden', klikk: () => {
+      const F = FMT(), S = MAC.skjerm;
+      endre(() => {
+        l.skala = Math.ceil(Math.min(F.w / S.b, F.h / S.h) / macFaktor(F) * 1000) / 1000;
+        l.x = Math.round(F.w / 2);
+        l.y = Math.round(F.h / 2);
+        l.skygge = 0;
+      }, { struktur: true });
+      speilHvisPaa(['skala', 'x', 'y', 'skygge']);
+    } }]));
+    boks.appendChild(el('<div class="varsel">«Fyll høyden» gjør skjermen så stor at den fyller bildet i høyden. Det blir en smal stripe med bakgrunn på hver side, ' +
+      'fordi App Store vil ha Mac-bilder i formatet 16:10, og skjermbildet er litt høyere. Velg fargen på stripene i laget «Bakgrunn».</div>'));
+  } else boks.appendChild(fargegrid(MACFARGER, l));
   boks.appendChild(skyv('Størrelse', () => l.skala, v => { l.skala = v; }, 0.1, 1.2, 0.01, v => Math.round(v * 100) + ' %', norm.skala, ['skala']));
   boks.appendChild(skyv('Skygge', () => l.skygge, v => { l.skygge = v; }, 0, 100, 1, v => v + ' %', norm.skygge, ['skygge']));
   boks.appendChild(el('<div style="font-size:12px;color:var(--gra);margin-top:2px">Utsnitt av skjermbildet</div>'));
   boks.appendChild(skyv('Zoom', () => l.zoom, v => { l.zoom = v; }, 100, 200, 1, v => v + ' %', norm.zoom, ['zoom']));
   boks.appendChild(skyv('Sideveis', () => l.panX, v => { l.panX = v; }, -100, 100, 1, v => v + ' %', norm.panX, ['panX']));
   boks.appendChild(skyv('Opp / ned', () => l.panY, v => { l.panY = v; }, -100, 100, 1, v => v + ' %', norm.panY, ['panY']));
+
+  boks.appendChild(el('<div style="font-size:12px;color:var(--gra);margin-top:2px">Menylinje</div>'));
+  const klokkerad = el('<div class="feltrad"><span class="navnelapp">Klokke</span><input type="text" spellcheck="false" aria-label="Klokke i menylinjen" placeholder="Som i skjermbildet"></div>');
+  const klokke = klokkerad.querySelector('input');
+  klokke.value = l.menyKlokke || '';
+  const hjelp = el('<div class="varsel"></div>');
+  const visHjelp = () => {
+    const st = menylinjeStatus(l);
+    hjelp.textContent = st.feil || 'Skriv klokkeslett og dato slik Macen viser dem, for eksempel «tir. 3. nov. kl. 09:41». ' +
+      'Fasade bytter ut klokken i menylinjen med teksten.' + (ER_MAC ? '' : ' Skriften blir systemfonten på denne maskinen, ikke den macOS bruker.');
+  };
+  klokke.addEventListener('input', () => {
+    endre(() => { l.menyKlokke = klokke.value; });
+    speilHvisPaa(['menyKlokke']);
+    visHjelp();
+  });
+  boks.appendChild(klokkerad);
+  visHjelp();
+  boks.appendChild(hjelp);
 }
 
 function byggTekstPanel(boks, l) {

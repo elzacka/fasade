@@ -156,11 +156,30 @@ bilder med samme utseende, riktig størrelse og sømløse overganger.
   utseendet fra serien for iPhone og iPad. Den serien står urørt til du bytter
   tilbake.
 - Rammen er en MacBook Air 13 tommer. Velg farge og størrelse i panelet.
+- Under «Ramme» velger du «MacBook Air» eller «Bare skjermen». «Bare skjermen»
+  viser skjermbildet uten Macen rundt, med eller uten notch.
+- «Fyll høyden» gjør skjermen så stor at den fyller bildet i høyden, og slår av
+  skyggen. Det blir en smal stripe med bakgrunn på hver side, fordi App Store vil
+  ha Mac-bilder i formatet 16:10, og skjermbildet fra en MacBook Air er litt
+  høyere. Velg fargen på stripene i laget «Bakgrunn».
 - Ta skjermbildet av hele skjermen med <kbd>⇧</kbd> <kbd>⌘</kbd> <kbd>3</kbd>.
   Et skjermbilde fra en MacBook Air 13 tommer passer rammen, uansett
   skjermoppløsning. «Sjekk serien» sier fra når skjermbildet har en annen form
   enn skjermen.
 - «+ Mac» legger en Mac inn i alle formater, også ved siden av en telefon.
+
+### Menylinje
+
+- Under «Menylinje» skriver du klokkeslett og dato slik Macen viser dem, for
+  eksempel «tir. 3. nov. kl. 09:41». Fasade bytter ut klokken i skjermbildet
+  med teksten, i samme størrelse og farge.
+- Skjermbildet beholder klokken sin hvis feltet er tomt.
+- Fasade skriver klokken med systemfonten. På PC blir skriften en annen enn den
+  macOS bruker.
+
+> [!TIP]
+> Vil du fjerne et symbol fra menylinjen? Hold inne <kbd>⌘</kbd> og dra
+> symbolet ut av menylinjen før du tar skjermbildet.
 
 ## Bakgrunn
 
@@ -185,10 +204,13 @@ Sjekken finner:
 - Overganger som ikke går opp
 - En overskrift som blir for liten i søkeresultatet, for iPhone og iPad
 - Statuslinjer Fasade ikke kan skjule eller bytte ut
+- En klokke i menylinjen som Fasade ikke finner, eller som blir så lang at den
+  dekker symbolet ved siden av
 - Grafikk uten bilde
 - Mer enn ti bilder i serien
 
-En telefon eller Mac som går ut over kanten, regnes som et bevisst utsnitt.
+En telefon eller Mac som går ut over kanten eller ligger helt inntil den, regnes
+som et bevisst utsnitt.
 
 ## Lagring
 
